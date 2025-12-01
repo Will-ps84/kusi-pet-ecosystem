@@ -1,9 +1,7 @@
 import { Link } from 'react-router-dom';
 import { PawPrint, Heart, Mail, Phone } from 'lucide-react';
-
 export function Footer() {
-  return (
-    <footer className="border-t border-border bg-muted/30">
+  return <footer className="border-t border-border bg-muted/30">
       <div className="container py-12">
         <div className="grid gap-8 md:grid-cols-4">
           {/* Brand */}
@@ -80,7 +78,7 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-primary" />
-                <span>+51 999 999 999</span>
+                <span>+51 990 613 960</span>
               </li>
             </ul>
           </div>
@@ -96,6 +94,5 @@ export function Footer() {
           </p>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 }

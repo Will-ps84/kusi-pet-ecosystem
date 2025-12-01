@@ -4,74 +4,58 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useState } from 'react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 export function Header() {
-  const { user, profile, signOut, hasRole } = useAuth();
-  const { itemCount } = useCart();
+  const {
+    user,
+    profile,
+    signOut,
+    hasRole
+  } = useAuth();
+  const {
+    itemCount
+  } = useCart();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
   };
-
-  const navLinks = [
-    { href: '/marketplace', label: 'Marketplace' },
-    ...(user ? [
-      { href: '/mi-avatar', label: 'Mi Avatar' },
-      { href: '/mis-pedidos', label: 'Mis Pedidos' },
-      { href: '/mis-mascotas', label: 'Mis Mascotas' },
-    ] : []),
-  ];
-
-  return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
+  const navLinks = [{
+    href: '/marketplace',
+    label: 'Marketplace'
+  }, ...(user ? [{
+    href: '/mi-avatar',
+    label: 'Mi Avatar'
+  }, {
+    href: '/mis-pedidos',
+    label: 'Mis Pedidos'
+  }, {
+    href: '/mis-mascotas',
+    label: 'Mis Mascotas'
+  }] : [])];
+  return <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container h-16 items-center justify-between flex flex-row">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 transition-transform hover:scale-105">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-hero shadow-glow">
+          <div className="flex h-10 w-10 items-center justify-center bg-gradient-hero shadow-glow rounded-3xl">
             <PawPrint className="h-6 w-6 text-primary-foreground" />
           </div>
-          <span className="text-xl font-bold text-foreground">
-            Kusi <span className="text-primary">Pet</span>
+          <span className="font-bold text-foreground text-3xl">Kusi Pet<span className="text-primary">Pet</span>
           </span>
         </Link>
 
         {/* Desktop Navigation */}
         <nav className="hidden items-center gap-6 md:flex">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              to={link.href}
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-            >
+          {navLinks.map(link => <Link key={link.href} to={link.href} className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
               {link.label}
-            </Link>
-          ))}
-          {hasRole('admin') && (
-            <Link
-              to="/admin"
-              className="text-sm font-medium text-accent transition-colors hover:text-accent/80"
-            >
+            </Link>)}
+          {hasRole('admin') && <Link to="/admin" className="text-sm font-medium text-accent transition-colors hover:text-accent/80">
               Admin
-            </Link>
-          )}
-          {hasRole('vendor') && (
-            <Link
-              to="/vendor"
-              className="text-sm font-medium text-accent transition-colors hover:text-accent/80"
-            >
+            </Link>}
+          {hasRole('vendor') && <Link to="/vendor" className="text-sm font-medium text-accent transition-colors hover:text-accent/80">
               Vendedor
-            </Link>
-          )}
+            </Link>}
         </nav>
 
         {/* Actions */}
@@ -80,17 +64,14 @@ export function Header() {
           <Link to="/carrito">
             <Button variant="ghost" size="icon" className="relative">
               <ShoppingCart className="h-5 w-5" />
-              {itemCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
+              {itemCount > 0 && <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
                   {itemCount}
-                </span>
-              )}
+                </span>}
             </Button>
           </Link>
 
           {/* User Menu */}
-          {user ? (
-            <DropdownMenu>
+          {user ? <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
                   <User className="h-5 w-5" />
@@ -117,9 +98,7 @@ export function Header() {
                   Cerrar sesión
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <div className="hidden items-center gap-2 sm:flex">
+            </DropdownMenu> : <div className="hidden items-center gap-2 sm:flex">
               <Link to="/auth">
                 <Button variant="ghost" size="sm">
                   Iniciar sesión
@@ -130,46 +109,25 @@ export function Header() {
                   Crear cuenta
                 </Button>
               </Link>
-            </div>
-          )}
+            </div>}
 
           {/* Mobile Menu Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
+          <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
         </div>
       </div>
 
       {/* Mobile Navigation */}
-      {mobileMenuOpen && (
-        <div className="border-t border-border md:hidden">
+      {mobileMenuOpen && <div className="border-t border-border md:hidden">
           <nav className="container flex flex-col gap-2 py-4">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                to={link.href}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
-                onClick={() => setMobileMenuOpen(false)}
-              >
+            {navLinks.map(link => <Link key={link.href} to={link.href} className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-primary" onClick={() => setMobileMenuOpen(false)}>
                 {link.label}
-              </Link>
-            ))}
-            {hasRole('admin') && (
-              <Link
-                to="/admin"
-                className="rounded-lg px-4 py-2 text-sm font-medium text-accent transition-colors hover:bg-muted"
-                onClick={() => setMobileMenuOpen(false)}
-              >
+              </Link>)}
+            {hasRole('admin') && <Link to="/admin" className="rounded-lg px-4 py-2 text-sm font-medium text-accent transition-colors hover:bg-muted" onClick={() => setMobileMenuOpen(false)}>
                 Admin
-              </Link>
-            )}
-            {!user && (
-              <div className="flex gap-2 pt-2">
+              </Link>}
+            {!user && <div className="flex gap-2 pt-2">
                 <Link to="/auth" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
                   <Button variant="outline" className="w-full">
                     Iniciar sesión
@@ -180,11 +138,8 @@ export function Header() {
                     Crear cuenta
                   </Button>
                 </Link>
-              </div>
-            )}
+              </div>}
           </nav>
-        </div>
-      )}
-    </header>
-  );
+        </div>}
+    </header>;
 }
