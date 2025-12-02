@@ -5,19 +5,38 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Pet, Product, VaccinationRecord, SPECIES_LABELS, SEX_LABELS } from '@/lib/types';
-import { Sparkles, Send, ShoppingCart, Calendar, Syringe, PawPrint, MessageCircle } from 'lucide-react';
-import { useCart } from '@/contexts/CartContext';
+import { Pet, Product, VaccinationRecord, SPECIES_LABELS, SEX_LABELS, Category } from '@/lib/types';
+import { Sparkles, Send, ShoppingCart, Calendar, Syringe, PawPrint, MessageCircle, Plus, Minus, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format, parseISO, isPast, isWithinInterval, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useMainPetPhoto } from '@/hooks/useMainPetPhoto';
+import { AssistantCart } from '@/components/avatar/AssistantCart';
+import { toast } from 'sonner';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  type?: 'text' | 'order-confirmation';
 }
+
+interface CartItem {
+  product: Product;
+  quantity: number;
+}
+
+interface OrderSummary {
+  items: { name: string; quantity: number; subtotal: number }[];
+  total_products_amount: number;
+  delivery_fee: number;
+  total_amount: number;
+  estimated_delivery: string;
+}
+
+// Categories by species for smart recommendations
+const CAT_CATEGORIES = ['Alimento', 'Snacks/Premios', 'Artículos de cuidado', 'Arena para gato'];
+const DOG_CATEGORIES = ['Alimento', 'Juguetes', 'Snacks/Premios', 'Artículos de cuidado'];
 
 // Pet Avatar Card with photo integration
 function PetAvatarCard({ 
@@ -42,83 +61,54 @@ function PetAvatarCard({
 
   return (
     <div 
-      className="rounded-xl border border-border p-5 transition-colors"
+      className="rounded-xl border border-border p-4 transition-colors"
       style={{ 
         background: mainPhoto.url 
           ? `linear-gradient(135deg, ${mainPhoto.accentColor}, ${mainPhoto.dominantColor}20)` 
           : 'var(--gradient-avatar, linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--primary) / 0.2)))'
       }}
     >
-      <div className="mb-4 flex items-center gap-4">
-        {/* Pet Photo or Emoji */}
-        <div className="relative h-16 w-16 overflow-hidden rounded-full bg-card shadow-md lg:h-20 lg:w-20">
+      <div className="mb-3 flex items-center gap-3">
+        <div className="relative h-14 w-14 overflow-hidden rounded-full bg-card shadow-md">
           {mainPhoto.url ? (
-            <img
-              src={mainPhoto.url}
-              alt={pet.name}
-              className="h-full w-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
+            <img src={mainPhoto.url} alt={pet.name} className="h-full w-full object-cover" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-4xl lg:text-5xl">
+            <div className="flex h-full w-full items-center justify-center text-3xl">
               {getSpeciesEmoji(pet.species)}
             </div>
           )}
         </div>
         <div>
-          <h2 className="text-xl font-bold text-foreground lg:text-2xl">{pet.name}</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-lg font-bold text-foreground">{pet.name}</h2>
+          <p className="text-xs text-muted-foreground">
             {SPECIES_LABELS[pet.species]} {pet.breed && `• ${pet.breed}`}
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 text-sm">
-        {pet.sex && (
-          <div className="rounded-lg bg-card/80 px-3 py-2">
-            <span className="text-muted-foreground">Sexo:</span>{' '}
-            <span className="font-medium">{SEX_LABELS[pet.sex]}</span>
-          </div>
-        )}
+      <div className="grid grid-cols-2 gap-1.5 text-xs">
         {pet.age_years && (
-          <div className="rounded-lg bg-card/80 px-3 py-2">
+          <div className="rounded-md bg-card/80 px-2 py-1.5">
             <span className="text-muted-foreground">Edad:</span>{' '}
             <span className="font-medium">{pet.age_years} años</span>
           </div>
         )}
-        {pet.color && (
-          <div className="rounded-lg bg-card/80 px-3 py-2">
-            <span className="text-muted-foreground">Color:</span>{' '}
-            <span className="font-medium">{pet.color}</span>
-          </div>
-        )}
         {pet.weight_kg && (
-          <div className="rounded-lg bg-card/80 px-3 py-2">
+          <div className="rounded-md bg-card/80 px-2 py-1.5">
             <span className="text-muted-foreground">Peso:</span>{' '}
             <span className="font-medium">{pet.weight_kg} kg</span>
           </div>
         )}
       </div>
 
-      {pet.birthday && (
-        <div className="mt-3 flex items-center gap-2 rounded-lg bg-card/80 px-3 py-2">
-          <Calendar className="h-4 w-4 text-accent" />
-          <span className="text-sm">
-            Cumpleaños: {format(parseISO(pet.birthday), "d 'de' MMMM", { locale: es })}
-          </span>
-        </div>
-      )}
-
       {nextVac && nextVac.next_due_date && (
-        <div className="mt-3 flex items-center justify-between rounded-lg bg-card/80 px-3 py-2">
+        <div className="mt-2 flex items-center justify-between rounded-md bg-card/80 px-2 py-1.5">
           <div className="flex items-center gap-2">
-            <Syringe className="h-4 w-4 text-primary" />
-            <div className="text-sm">
+            <Syringe className="h-3.5 w-3.5 text-primary" />
+            <div className="text-xs">
               <p className="font-medium">{nextVac.vaccine_name}</p>
-              <p className="text-xs text-muted-foreground">
-                {format(parseISO(nextVac.next_due_date), "d 'de' MMMM", { locale: es })}
+              <p className="text-muted-foreground">
+                {format(parseISO(nextVac.next_due_date), "d MMM", { locale: es })}
               </p>
             </div>
           </div>
@@ -126,7 +116,7 @@ function PetAvatarCard({
             const status = getVaccinationStatus(nextVac.next_due_date);
             if (!status) return null;
             return (
-              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${status.className}`}>
+              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${status.className}`}>
                 {status.label}
               </span>
             );
@@ -137,25 +127,70 @@ function PetAvatarCard({
   );
 }
 
+// Vet-style assistant helper functions
+// TODO: These can be replaced with Lovable AI Gateway calls for more intelligent responses
+function getVetTip(pet: Pet, topic: string): string {
+  const species = pet.species;
+  const age = pet.age_years || 0;
+  
+  // Basic care tips based on species and topic
+  if (topic.includes('aliment') || topic.includes('comida') || topic.includes('comer')) {
+    if (species === 'gato') {
+      if (age < 1) return `Para gatitos como ${pet.name}, recomiendo alimento especial para cachorros con alto contenido proteico. Aliméntalo 3-4 veces al día en porciones pequeñas.`;
+      if (age > 7) return `Los gatos mayores como ${pet.name} necesitan alimento senior con menos calorías y más nutrientes para articulaciones. Considera 2 comidas al día.`;
+      return `Para ${pet.name}, asegúrate de darle alimento de alta calidad con proteína animal como ingrediente principal. Los gatos son carnívoros estrictos.`;
+    } else {
+      if (age < 1) return `Para cachorros como ${pet.name}, el alimento debe ser específico para su tamaño y edad. Aliméntalo 3 veces al día hasta el año.`;
+      if (age > 7) return `Los perros senior como ${pet.name} necesitan alimento con menos calorías y más fibra. Considera agregar glucosamina para sus articulaciones.`;
+      return `Para ${pet.name}, el alimento debe ser adecuado a su tamaño y nivel de actividad. Divide su ración diaria en 2 comidas.`;
+    }
+  }
+  
+  if (topic.includes('juego') || topic.includes('ejercicio') || topic.includes('actividad')) {
+    if (species === 'gato') {
+      return `Los gatos como ${pet.name} necesitan estimulación mental y física. Dedica 15-20 minutos diarios a juegos interactivos con varitas o pelotas.`;
+    }
+    return `${pet.name} necesita ejercicio diario según su tamaño y edad. Caminatas, juegos de buscar y tiempo de juego fortalecen el vínculo y su salud.`;
+  }
+  
+  if (topic.includes('vacuna')) {
+    return `Las vacunas son esenciales para ${pet.name}. Consulta con tu veterinario el calendario de vacunación apropiado para su edad y estilo de vida.`;
+  }
+  
+  if (topic.includes('baño') || topic.includes('higiene') || topic.includes('limpie')) {
+    if (species === 'gato') {
+      return `Los gatos como ${pet.name} se acicalan solos, pero puedes cepillarlo semanalmente para reducir bolas de pelo. Mantén su arenero limpio diariamente.`;
+    }
+    return `Baña a ${pet.name} cada 4-6 semanas o cuando sea necesario. Cepíllalo regularmente y revisa sus oídos y uñas semanalmente.`;
+  }
+  
+  return '';
+}
+
 export default function MyAvatar() {
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const [pets, setPets] = useState<Pet[]>([]);
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
   const [recommendations, setRecommendations] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [vaccinations, setVaccinations] = useState<VaccinationRecord[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Assistant cart state
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [lastDeliveryInfo, setLastDeliveryInfo] = useState<{ address: string; district: string } | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/auth');
     } else if (user) {
       fetchPets();
+      fetchLastDeliveryInfo();
     }
   }, [user, authLoading, navigate]);
 
@@ -183,12 +218,33 @@ export default function MyAvatar() {
     }
   };
 
+  const fetchLastDeliveryInfo = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('delivery_address, district')
+        .eq('user_id', user!.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!error && data) {
+        setLastDeliveryInfo({
+          address: data.delivery_address,
+          district: data.district || '',
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching delivery info:', error);
+    }
+  };
+
   const selectPet = async (pet: Pet) => {
     setSelectedPet(pet);
     setMessages([
       {
         role: 'assistant',
-        content: `¡Hola! Soy el asistente de ${pet.name}. ¿En qué puedo ayudarte hoy? Puedo darte recomendaciones de productos, recordarte sobre vacunas o responder tus preguntas.`,
+        content: `¡Hola! Soy el Asistente Kusi Vet de ${pet.name} 🐾\n\nPuedo ayudarte con:\n• Recomendaciones de productos\n• Consejos de cuidado básico\n• Recordatorios de vacunas\n• Crear pedidos directamente\n\n¿En qué puedo ayudarte hoy?`,
       },
     ]);
 
@@ -199,17 +255,36 @@ export default function MyAvatar() {
       .order('next_due_date', { ascending: true });
 
     if (vacData) setVaccinations(vacData as VaccinationRecord[]);
-    fetchRecommendations(pet.species);
+    fetchRecommendations(pet);
   };
 
-  const fetchRecommendations = async (species: string) => {
+  const fetchRecommendations = async (pet: Pet) => {
     try {
-      const { data, error } = await supabase
+      // First fetch categories to filter by name
+      const { data: catData } = await supabase
+        .from('categories')
+        .select('*');
+      
+      if (catData) setCategories(catData as Category[]);
+
+      // Get relevant category IDs based on species
+      const relevantCategoryNames = pet.species === 'gato' ? CAT_CATEGORIES : DOG_CATEGORIES;
+      const relevantCategoryIds = catData
+        ?.filter(c => relevantCategoryNames.some(name => c.name.toLowerCase().includes(name.toLowerCase())))
+        .map(c => c.id) || [];
+
+      // Fetch products matching species and categories
+      let query = supabase
         .from('products')
         .select('*, category:categories(*)')
         .eq('is_active', true)
-        .or(`species_target.eq.${species},species_target.eq.ambos`)
-        .limit(8);
+        .or(`species_target.eq.${pet.species},species_target.eq.ambos`);
+
+      if (relevantCategoryIds.length > 0) {
+        query = query.in('category_id', relevantCategoryIds);
+      }
+
+      const { data, error } = await query.limit(12);
 
       if (error) throw error;
       setRecommendations(data as unknown as Product[]);
@@ -225,37 +300,95 @@ export default function MyAvatar() {
     setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
     setInputMessage('');
 
+    // TODO: Replace this rule-based logic with Lovable AI Gateway for smarter responses
+    // Example: await supabase.functions.invoke('avatar-chat', { body: { messages, pet: selectedPet } })
     setTimeout(() => {
       let response = '';
       const lowerMessage = userMessage.toLowerCase();
 
+      // Check for vet tips first
+      const vetTip = getVetTip(selectedPet, lowerMessage);
+      
       if (lowerMessage.includes('vacuna') || lowerMessage.includes('vacunación')) {
         if (vaccinations.length > 0) {
           const nextVac = vaccinations.find((v) => v.next_due_date);
           if (nextVac) {
-            response = `La próxima vacuna de ${selectedPet.name} es "${nextVac.vaccine_name}" programada para ${format(parseISO(nextVac.next_due_date!), "d 'de' MMMM", { locale: es })}. Te recomiendo agendar una cita con el veterinario pronto.`;
+            response = `La próxima vacuna de ${selectedPet.name} es "${nextVac.vaccine_name}" programada para ${format(parseISO(nextVac.next_due_date!), "d 'de' MMMM", { locale: es })}.\n\n${vetTip || 'Te recomiendo agendar una cita con el veterinario pronto.'}`;
           } else {
             response = `${selectedPet.name} tiene ${vaccinations.length} vacuna(s) registrada(s). No hay próximas vacunas programadas.`;
           }
         } else {
           response = `No tienes vacunas registradas para ${selectedPet.name}. Te recomiendo llevar un registro de sus vacunas para un mejor cuidado.`;
         }
-      } else if (lowerMessage.includes('comida') || lowerMessage.includes('alimento') || lowerMessage.includes('comer')) {
-        response = `Para ${selectedPet.name}, un ${SPECIES_LABELS[selectedPet.species].toLowerCase()} de ${selectedPet.age_years || 'edad desconocida'} años, te recomiendo un alimento de alta calidad. ¿Te gustaría ver nuestras opciones de alimentos?`;
-      } else if (lowerMessage.includes('producto') || lowerMessage.includes('recomienda')) {
-        response = `Basándome en las necesidades de ${selectedPet.name}, he preparado algunas recomendaciones que puedes ver abajo. ¡Son productos ideales para ${SPECIES_LABELS[selectedPet.species].toLowerCase()}s!`;
+      } else if (vetTip) {
+        response = vetTip;
+      } else if (lowerMessage.includes('producto') || lowerMessage.includes('recomienda') || lowerMessage.includes('comprar')) {
+        response = `He seleccionado productos ideales para ${selectedPet.name} basándome en su especie y necesidades. ¡Puedes agregarlos directamente a tu pedido desde las tarjetas de abajo!`;
+      } else if (lowerMessage.includes('pedido') || lowerMessage.includes('orden') || lowerMessage.includes('carrito')) {
+        if (cartItems.length > 0) {
+          response = `Tienes ${cartItems.length} producto(s) en tu pedido. Puedes confirmar tu pedido desde el panel de carrito.`;
+        } else {
+          response = `Aún no tienes productos en tu pedido. Agrega productos desde las recomendaciones y yo te ayudo a completar la compra.`;
+        }
       } else if (lowerMessage.includes('cumpleaños') || lowerMessage.includes('edad')) {
         if (selectedPet.birthday) {
           response = `¡El cumpleaños de ${selectedPet.name} es el ${format(parseISO(selectedPet.birthday), "d 'de' MMMM", { locale: es })}! 🎂`;
         } else {
-          response = `No tengo registrado el cumpleaños de ${selectedPet.name}. Puedes agregarlo en la sección "Mis mascotas".`;
+          response = `No tengo registrado el cumpleaños de ${selectedPet.name}. Puedes agregarlo en "Mis mascotas".`;
         }
       } else {
-        response = `Gracias por tu mensaje. Como asistente de ${selectedPet.name}, puedo ayudarte con recomendaciones de productos, información sobre vacunas y recordatorios importantes. ¿En qué más puedo ayudarte?`;
+        response = `Gracias por tu mensaje. Como Asistente Kusi Vet de ${selectedPet.name}, puedo ayudarte con:\n\n• Recomendaciones de productos\n• Consejos de alimentación y cuidado\n• Información sobre vacunas\n• Crear pedidos\n\n¿En qué te puedo ayudar?`;
+      }
+
+      // Add disclaimer for health-related topics
+      if (lowerMessage.includes('enferm') || lowerMessage.includes('síntoma') || lowerMessage.includes('dolor') || lowerMessage.includes('salud') || lowerMessage.includes('médic')) {
+        response += '\n\n⚠️ *Este asistente no reemplaza a un veterinario. Ante síntomas graves o dudas de salud, visita siempre a un profesional.*';
       }
 
       setMessages((prev) => [...prev, { role: 'assistant', content: response }]);
     }, 500);
+  };
+
+  const addToCart = (product: Product, quantity: number = 1) => {
+    setCartItems(prev => {
+      const existing = prev.find(item => item.product.id === product.id);
+      if (existing) {
+        return prev.map(item =>
+          item.product.id === product.id
+            ? { ...item, quantity: Math.min(item.quantity + quantity, product.stock) }
+            : item
+        );
+      }
+      return [...prev, { product, quantity }];
+    });
+    toast.success(`${product.name} agregado al pedido`);
+  };
+
+  const updateCartQuantity = (productId: string, quantity: number) => {
+    setCartItems(prev =>
+      prev.map(item =>
+        item.product.id === productId ? { ...item, quantity } : item
+      )
+    );
+  };
+
+  const removeFromCart = (productId: string) => {
+    setCartItems(prev => prev.filter(item => item.product.id !== productId));
+  };
+
+  const clearCart = () => {
+    setCartItems([]);
+  };
+
+  const handleOrderConfirmed = (orderSummary: OrderSummary) => {
+    // Add confirmation message to chat
+    const itemsList = orderSummary.items.map(i => `• ${i.name} x${i.quantity}: S/ ${i.subtotal.toFixed(2)}`).join('\n');
+    const confirmationMessage = `✅ ¡Pedido confirmado!\n\n${itemsList}\n\nSubtotal: S/ ${orderSummary.total_products_amount.toFixed(2)}\nDelivery: S/ ${orderSummary.delivery_fee.toFixed(2)}\n**Total: S/ ${orderSummary.total_amount.toFixed(2)}**\n\n📦 Entrega estimada: ${orderSummary.estimated_delivery}\n\nPuedes ver tu pedido en "Mis pedidos".`;
+    
+    setMessages(prev => [...prev, { role: 'assistant', content: confirmationMessage }]);
+    
+    // Refresh delivery info for next order
+    fetchLastDeliveryInfo();
   };
 
   const getSpeciesEmoji = (species: string) => {
@@ -270,7 +403,6 @@ export default function MyAvatar() {
 
   const getVaccinationStatus = (nextDueDate: string | null) => {
     if (!nextDueDate) return null;
-
     const dueDate = parseISO(nextDueDate);
     const today = new Date();
     const soonThreshold = addDays(today, 30);
@@ -317,33 +449,33 @@ export default function MyAvatar() {
 
   return (
     <Layout>
-      <div className="container py-6 lg:py-8">
+      <div className="container py-4 pb-24 lg:py-6 lg:pb-6">
         {/* Header */}
-        <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-avatar">
-            <Sparkles className="h-6 w-6 text-lavender-dark" />
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-avatar">
+            <Sparkles className="h-5 w-5 text-lavender-dark" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground lg:text-3xl">Mi Avatar</h1>
-            <p className="text-sm text-muted-foreground">Asistente digital para tu mascota</p>
+            <h1 className="text-xl font-bold text-foreground lg:text-2xl">Asistente Kusi Vet</h1>
+            <p className="text-xs text-muted-foreground">Tu compañero inteligente para el cuidado de mascotas</p>
           </div>
         </div>
 
         {/* Main Layout */}
-        <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
-          {/* Left Column */}
-          <div className="space-y-4">
+        <div className="grid gap-4 lg:grid-cols-[280px_1fr_280px]">
+          {/* Left Column: Pet Selection */}
+          <div className="space-y-3 lg:order-1">
             {/* Pet Selector */}
-            <div className="rounded-xl border border-border bg-card p-4">
-              <p className="mb-3 text-sm font-medium text-muted-foreground">Selecciona mascota</p>
-              <div className="flex flex-wrap gap-2">
+            <div className="rounded-xl border border-border bg-card p-3">
+              <p className="mb-2 text-xs font-medium text-muted-foreground">Mascota</p>
+              <div className="flex flex-wrap gap-1.5">
                 {pets.map((pet) => (
                   <Button
                     key={pet.id}
                     variant={selectedPet?.id === pet.id ? 'hero' : 'outline'}
                     size="sm"
                     onClick={() => selectPet(pet)}
-                    className="gap-1"
+                    className="gap-1 text-xs h-8"
                   >
                     <span>{getSpeciesEmoji(pet.species)}</span>
                     <span>{pet.name}</span>
@@ -352,7 +484,7 @@ export default function MyAvatar() {
               </div>
             </div>
 
-            {/* Pet Avatar Card with Photo */}
+            {/* Pet Card */}
             {selectedPet && (
               <PetAvatarCard 
                 pet={selectedPet} 
@@ -360,33 +492,38 @@ export default function MyAvatar() {
                 getVaccinationStatus={getVaccinationStatus} 
               />
             )}
+
+            {/* Disclaimer */}
+            <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 flex-shrink-0 text-warning" />
+                <p>Este asistente ofrece orientación general. No reemplaza la consulta con un veterinario profesional.</p>
+              </div>
+            </div>
           </div>
 
-          {/* Right Column: Chat & Recommendations */}
-          <div className="space-y-6">
+          {/* Center: Chat & Recommendations */}
+          <div className="space-y-4 lg:order-2">
             {/* Chat Panel */}
-            <div className="flex h-[400px] flex-col rounded-xl border border-border bg-card lg:h-[480px]">
-              <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-                <MessageCircle className="h-5 w-5 text-primary" />
+            <div className="flex h-[300px] flex-col rounded-xl border border-border bg-card lg:h-[360px]">
+              <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+                <MessageCircle className="h-4 w-4 text-primary" />
                 <div>
-                  <h3 className="font-semibold text-foreground">
-                    Asistente de {selectedPet?.name}
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Chat con {selectedPet?.name}
                   </h3>
-                  <p className="text-xs text-muted-foreground">
-                    Pregúntame sobre productos, vacunas o cuidados
-                  </p>
                 </div>
               </div>
 
-              <ScrollArea className="flex-1 p-4">
-                <div className="space-y-3">
+              <ScrollArea className="flex-1 p-3">
+                <div className="space-y-2">
                   {messages.map((msg, i) => (
                     <div
                       key={i}
                       className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
                       <div
-                        className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
+                        className={`max-w-[90%] rounded-2xl px-3 py-2 text-sm whitespace-pre-line ${
                           msg.role === 'user'
                             ? 'rounded-br-md bg-primary text-primary-foreground'
                             : 'rounded-bl-md bg-muted text-foreground'
@@ -400,16 +537,16 @@ export default function MyAvatar() {
                 </div>
               </ScrollArea>
 
-              <div className="border-t border-border p-3">
+              <div className="border-t border-border p-2">
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Escribe tu mensaje..."
+                    placeholder="Pregunta sobre cuidados, productos..."
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                    className="flex-1"
+                    className="flex-1 h-9 text-sm"
                   />
-                  <Button variant="hero" size="icon" onClick={handleSendMessage}>
+                  <Button variant="hero" size="icon" onClick={handleSendMessage} className="h-9 w-9">
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>
@@ -419,52 +556,99 @@ export default function MyAvatar() {
             {/* Recommendations */}
             {recommendations.length > 0 && (
               <div>
-                <h3 className="mb-3 text-lg font-semibold text-foreground">
-                  Recomendaciones para {selectedPet?.name}
+                <h3 className="mb-2 text-sm font-semibold text-foreground">
+                  Recomendados para {selectedPet?.name}
                 </h3>
-                <div className="relative -mx-4 px-4 lg:mx-0 lg:px-0">
-                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
-                    {recommendations.map((product) => (
-                      <div
-                        key={product.id}
-                        className="w-[140px] shrink-0 snap-start rounded-lg border border-border bg-card p-3 transition-all hover:border-primary/50 lg:w-[160px]"
-                      >
-                        <div className="mb-2 aspect-square overflow-hidden rounded-lg bg-muted">
-                          {product.image_url ? (
-                            <img
-                              src={product.image_url}
-                              alt={product.name}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-full items-center justify-center text-3xl">📦</div>
-                          )}
-                        </div>
-                        <p className="line-clamp-2 text-xs font-medium text-foreground lg:text-sm">
-                          {product.name}
-                        </p>
-                        <div className="mt-2 flex items-center justify-between">
-                          <span className="text-xs font-bold text-primary lg:text-sm">
-                            {formatPrice(product.price_total_igv)}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => addToCart(product)}
-                          >
-                            <ShoppingCart className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3">
+                  {recommendations.slice(0, 6).map((product) => (
+                    <ProductRecommendationCard
+                      key={product.id}
+                      product={product}
+                      onAddToCart={addToCart}
+                    />
+                  ))}
                 </div>
               </div>
             )}
           </div>
+
+          {/* Right Column: Cart (Desktop only) */}
+          <div className="lg:order-3">
+            <AssistantCart
+              items={cartItems}
+              onUpdateQuantity={updateCartQuantity}
+              onRemoveItem={removeFromCart}
+              onClearCart={clearCart}
+              onOrderConfirmed={handleOrderConfirmed}
+              lastDeliveryInfo={lastDeliveryInfo}
+            />
+          </div>
         </div>
       </div>
     </Layout>
+  );
+}
+
+// Product recommendation card with quantity selector
+function ProductRecommendationCard({ 
+  product, 
+  onAddToCart 
+}: { 
+  product: Product; 
+  onAddToCart: (product: Product, quantity: number) => void;
+}) {
+  const [quantity, setQuantity] = useState(1);
+
+  const formatPrice = (price: number) => `S/ ${price.toFixed(2)}`;
+
+  return (
+    <div className="rounded-lg border border-border bg-card p-2 transition-all hover:border-primary/50">
+      <div className="mb-2 aspect-square overflow-hidden rounded-md bg-muted">
+        {product.image_url ? (
+          <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full items-center justify-center text-2xl">📦</div>
+        )}
+      </div>
+      <p className="line-clamp-2 text-xs font-medium text-foreground mb-1">{product.name}</p>
+      <p className="text-sm font-bold text-primary mb-2">{formatPrice(product.price_total_igv)}</p>
+      
+      {/* Quantity selector */}
+      <div className="flex items-center gap-1 mb-2">
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-6 w-6"
+          onClick={() => setQuantity(Math.max(1, quantity - 1))}
+          disabled={quantity <= 1}
+        >
+          <Minus className="h-3 w-3" />
+        </Button>
+        <span className="w-6 text-center text-xs font-medium">{quantity}</span>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-6 w-6"
+          onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+          disabled={quantity >= product.stock}
+        >
+          <Plus className="h-3 w-3" />
+        </Button>
+      </div>
+
+      <Button
+        variant="hero"
+        size="sm"
+        className="w-full h-7 text-xs"
+        onClick={() => {
+          onAddToCart(product, quantity);
+          setQuantity(1);
+        }}
+        disabled={product.stock < 1}
+      >
+        <ShoppingCart className="mr-1 h-3 w-3" />
+        Agregar
+      </Button>
+    </div>
   );
 }
