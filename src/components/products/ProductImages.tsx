@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Plus, Trash2, Image, X, Loader2, Star, Upload } from 'lucide-react';
+import { Plus, Trash2, Image, X, Loader2, Star, Upload, GripVertical } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -11,48 +11,52 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-interface PetPhoto {
+interface ProductImage {
   id: string;
-  pet_id: string;
+  product_id: string;
   image_url: string;
-  notes: string | null;
   is_main: boolean;
   sort_order: number;
   created_at: string;
 }
 
-interface PetPhotosProps {
-  petId: string;
-  petName: string;
+interface ProductImagesProps {
+  productId: string;
+  productName: string;
+  onMainImageChange?: (url: string | null) => void;
 }
 
-const MAX_PHOTOS = 4;
+const MAX_IMAGES = 4;
 
-export function PetPhotos({ petId, petName }: PetPhotosProps) {
+export function ProductImages({ productId, productName, onMainImageChange }: ProductImagesProps) {
   const { user } = useAuth();
-  const [photos, setPhotos] = useState<PetPhoto[]>([]);
+  const [images, setImages] = useState<ProductImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
-  const [selectedPhoto, setSelectedPhoto] = useState<PetPhoto | null>(null);
+  const [selectedImage, setSelectedImage] = useState<ProductImage | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    fetchPhotos();
-  }, [petId]);
+    fetchImages();
+  }, [productId]);
 
-  const fetchPhotos = async () => {
+  const fetchImages = async () => {
     try {
       const { data, error } = await supabase
-        .from('pet_photos')
+        .from('product_images')
         .select('*')
-        .eq('pet_id', petId)
+        .eq('product_id', productId)
         .order('is_main', { ascending: false })
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
-      setPhotos(data as PetPhoto[]);
+      setImages(data as ProductImage[]);
+      
+      // Notify parent of main image
+      const mainImage = data?.find(img => img.is_main) || data?.[0];
+      onMainImageChange?.(mainImage?.image_url || null);
     } catch (error) {
-      console.error('Error fetching photos:', error);
+      console.error('Error fetching images:', error);
     } finally {
       setIsLoading(false);
     }
@@ -62,8 +66,8 @@ export function PetPhotos({ petId, petName }: PetPhotosProps) {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    if (photos.length >= MAX_PHOTOS) {
-      toast.error(`Solo puedes tener ${MAX_PHOTOS} fotos por mascota`);
+    if (images.length >= MAX_IMAGES) {
+      toast.error(`Solo puedes tener ${MAX_IMAGES} imágenes por producto`);
       return;
     }
 
@@ -81,35 +85,35 @@ export function PetPhotos({ petId, petName }: PetPhotosProps) {
     try {
       // Upload to storage
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${petId}/${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}/${productId}/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('mascotas')
+        .from('productos')
         .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
       // Get public URL
       const { data: urlData } = supabase.storage
-        .from('mascotas')
+        .from('productos')
         .getPublicUrl(fileName);
 
-      // Insert into pet_photos
-      const isMain = photos.length === 0; // First photo is main by default
-      const { error: insertError } = await supabase.from('pet_photos').insert({
-        pet_id: petId,
+      // Insert into product_images
+      const isMain = images.length === 0;
+      const { error: insertError } = await supabase.from('product_images').insert({
+        product_id: productId,
         image_url: urlData.publicUrl,
         is_main: isMain,
-        sort_order: photos.length,
+        sort_order: images.length,
       });
 
       if (insertError) throw insertError;
 
-      toast.success('Foto agregada');
-      fetchPhotos();
+      toast.success('Imagen agregada');
+      fetchImages();
     } catch (error) {
-      console.error('Error uploading photo:', error);
-      toast.error('Error al subir la foto');
+      console.error('Error uploading image:', error);
+      toast.error('Error al subir la imagen');
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -118,86 +122,81 @@ export function PetPhotos({ petId, petName }: PetPhotosProps) {
     }
   };
 
-  const handleSetMain = async (photoId: string) => {
+  const handleSetMain = async (imageId: string) => {
     try {
-      // First, unset all as main
       await supabase
-        .from('pet_photos')
+        .from('product_images')
         .update({ is_main: false })
-        .eq('pet_id', petId);
+        .eq('product_id', productId);
 
-      // Then set the selected one as main
       const { error } = await supabase
-        .from('pet_photos')
+        .from('product_images')
         .update({ is_main: true })
-        .eq('id', photoId);
+        .eq('id', imageId);
 
       if (error) throw error;
-      toast.success('Foto principal actualizada');
-      fetchPhotos();
+      toast.success('Imagen principal actualizada');
+      fetchImages();
     } catch (error) {
-      console.error('Error setting main photo:', error);
-      toast.error('Error al actualizar la foto principal');
+      console.error('Error setting main image:', error);
+      toast.error('Error al actualizar la imagen principal');
     }
   };
 
-  const handleDeletePhoto = async (photo: PetPhoto) => {
-    if (!confirm('¿Estás seguro de eliminar esta foto?')) return;
+  const handleDeleteImage = async (image: ProductImage) => {
+    if (!confirm('¿Estás seguro de eliminar esta imagen?')) return;
 
     try {
       // Extract file path from URL
-      const url = new URL(photo.image_url);
+      const url = new URL(image.image_url);
       const pathParts = url.pathname.split('/');
-      const bucketIndex = pathParts.findIndex(p => p === 'mascotas');
+      const bucketIndex = pathParts.findIndex(p => p === 'productos');
       if (bucketIndex !== -1) {
         const filePath = pathParts.slice(bucketIndex + 1).join('/');
-        await supabase.storage.from('mascotas').remove([filePath]);
+        await supabase.storage.from('productos').remove([filePath]);
       }
 
-      // Delete from database
       const { error } = await supabase
-        .from('pet_photos')
+        .from('product_images')
         .delete()
-        .eq('id', photo.id);
+        .eq('id', image.id);
 
       if (error) throw error;
 
-      // If deleted photo was main, set first remaining as main
-      if (photo.is_main) {
-        const remaining = photos.filter(p => p.id !== photo.id);
+      if (image.is_main) {
+        const remaining = images.filter(i => i.id !== image.id);
         if (remaining.length > 0) {
           await supabase
-            .from('pet_photos')
+            .from('product_images')
             .update({ is_main: true })
             .eq('id', remaining[0].id);
         }
       }
 
-      toast.success('Foto eliminada');
-      setSelectedPhoto(null);
-      fetchPhotos();
+      toast.success('Imagen eliminada');
+      setSelectedImage(null);
+      fetchImages();
     } catch (error) {
-      console.error('Error deleting photo:', error);
-      toast.error('Error al eliminar la foto');
+      console.error('Error deleting image:', error);
+      toast.error('Error al eliminar la imagen');
     }
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div className="flex items-center justify-center py-4">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-          <Image className="h-5 w-5 text-primary" />
-          Fotos ({photos.length}/{MAX_PHOTOS})
-        </h3>
-        {photos.length < MAX_PHOTOS && (
+        <span className="text-sm font-medium">
+          Imágenes ({images.length}/{MAX_IMAGES})
+        </span>
+        {images.length < MAX_IMAGES && (
           <>
             <input
               ref={fileInputRef}
@@ -208,6 +207,7 @@ export function PetPhotos({ petId, petName }: PetPhotosProps) {
               disabled={isUploading}
             />
             <Button
+              type="button"
               variant="outline"
               size="sm"
               onClick={() => fileInputRef.current?.click()}
@@ -218,47 +218,46 @@ export function PetPhotos({ petId, petName }: PetPhotosProps) {
               ) : (
                 <Upload className="h-4 w-4" />
               )}
-              <span className="ml-2 hidden sm:inline">Subir foto</span>
+              <span className="ml-1">Subir</span>
             </Button>
           </>
         )}
       </div>
 
-      {photos.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border bg-muted/30 p-6 text-center">
-          <Image className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
-            No hay fotos de {petName}
-          </p>
+      {images.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4 text-center">
+          <Image className="mx-auto mb-1 h-6 w-6 text-muted-foreground" />
+          <p className="text-xs text-muted-foreground">Sin imágenes</p>
           <Button
+            type="button"
             variant="link"
             size="sm"
-            className="mt-2"
+            className="mt-1 h-auto p-0 text-xs"
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
           >
-            Agregar primera foto
+            Agregar primera imagen
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {photos.map((photo) => (
+        <div className="grid grid-cols-4 gap-2">
+          {images.map((image) => (
             <div
-              key={photo.id}
+              key={image.id}
               className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg bg-muted"
-              onClick={() => setSelectedPhoto(photo)}
+              onClick={() => setSelectedImage(image)}
             >
               <img
-                src={photo.image_url}
-                alt={`Foto de ${petName}`}
-                className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                src={image.image_url}
+                alt={productName}
+                className="h-full w-full object-cover"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = '/placeholder.svg';
                 }}
               />
-              {photo.is_main && (
-                <div className="absolute left-1 top-1 rounded-full bg-primary p-1">
-                  <Star className="h-3 w-3 fill-primary-foreground text-primary-foreground" />
+              {image.is_main && (
+                <div className="absolute left-0.5 top-0.5 rounded-full bg-primary p-0.5">
+                  <Star className="h-2.5 w-2.5 fill-primary-foreground text-primary-foreground" />
                 </div>
               )}
               <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/20" />
@@ -267,39 +266,38 @@ export function PetPhotos({ petId, petName }: PetPhotosProps) {
         </div>
       )}
 
-      {/* Photo Viewer Dialog */}
-      <Dialog open={!!selectedPhoto} onOpenChange={() => setSelectedPhoto(null)}>
-        <DialogContent className="max-w-2xl overflow-hidden p-0">
-          {selectedPhoto && (
+      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+        <DialogContent className="max-w-lg overflow-hidden p-0">
+          {selectedImage && (
             <div className="relative">
               <Button
                 variant="ghost"
                 size="icon"
                 className="absolute right-2 top-2 z-10 bg-background/80 backdrop-blur"
-                onClick={() => setSelectedPhoto(null)}
+                onClick={() => setSelectedImage(null)}
               >
                 <X className="h-4 w-4" />
               </Button>
               <img
-                src={selectedPhoto.image_url}
-                alt={`Foto de ${petName}`}
-                className="max-h-[70vh] w-full bg-black object-contain"
+                src={selectedImage.image_url}
+                alt={productName}
+                className="max-h-[50vh] w-full bg-black object-contain"
               />
-              <div className="flex items-center justify-between gap-2 p-4">
-                <div className="flex items-center gap-2">
-                  {selectedPhoto.is_main ? (
+              <div className="flex items-center justify-between gap-2 p-3">
+                <div>
+                  {selectedImage.is_main ? (
                     <span className="flex items-center gap-1 text-sm text-primary">
                       <Star className="h-4 w-4 fill-primary" />
-                      Foto principal
+                      Principal
                     </span>
                   ) : (
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleSetMain(selectedPhoto.id)}
+                      onClick={() => handleSetMain(selectedImage.id)}
                     >
-                      <Star className="mr-1 h-4 w-4" />
-                      Establecer como principal
+                      <Star className="mr-1 h-3 w-3" />
+                      Hacer principal
                     </Button>
                   )}
                 </div>
@@ -307,7 +305,7 @@ export function PetPhotos({ petId, petName }: PetPhotosProps) {
                   variant="ghost"
                   size="sm"
                   className="text-destructive"
-                  onClick={() => handleDeletePhoto(selectedPhoto)}
+                  onClick={() => handleDeleteImage(selectedImage)}
                 >
                   <Trash2 className="mr-1 h-4 w-4" />
                   Eliminar

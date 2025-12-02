@@ -162,22 +162,28 @@ export type Database = {
           created_at: string | null
           id: string
           image_url: string
+          is_main: boolean | null
           notes: string | null
           pet_id: string
+          sort_order: number | null
         }
         Insert: {
           created_at?: string | null
           id?: string
           image_url: string
+          is_main?: boolean | null
           notes?: string | null
           pet_id: string
+          sort_order?: number | null
         }
         Update: {
           created_at?: string | null
           id?: string
           image_url?: string
+          is_main?: boolean | null
           notes?: string | null
           pet_id?: string
+          sort_order?: number | null
         }
         Relationships: [
           {
@@ -233,6 +239,41 @@ export type Database = {
           weight_kg?: number | null
         }
         Relationships: []
+      }
+      product_images: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_url: string
+          is_main: boolean | null
+          product_id: string
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_url: string
+          is_main?: boolean | null
+          product_id: string
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_url?: string
+          is_main?: boolean | null
+          product_id?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_images_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {

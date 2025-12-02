@@ -7,6 +7,7 @@ import { Product, SPECIES_TARGET_LABELS } from '@/lib/types';
 import { useCart } from '@/contexts/CartContext';
 import { ShoppingCart, Minus, Plus, ArrowLeft, Check, Store } from 'lucide-react';
 import { toast } from 'sonner';
+import { ProductImageGallery } from '@/components/products/ProductImageGallery';
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -99,18 +100,12 @@ export default function ProductDetail() {
         </Link>
 
         <div className="grid gap-8 md:grid-cols-2">
-          {/* Image */}
-          <div className="overflow-hidden rounded-2xl bg-muted">
-            {product.image_url ? (
-              <img
-                src={product.image_url}
-                alt={product.name}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex aspect-square items-center justify-center text-8xl">📦</div>
-            )}
-          </div>
+          {/* Image Gallery */}
+          <ProductImageGallery
+            productId={product.id}
+            fallbackImage={product.image_url}
+            productName={product.name}
+          />
 
           {/* Details */}
           <div className="flex flex-col">
