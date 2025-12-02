@@ -271,9 +271,9 @@ export default function VendorDashboard() {
                 if (!open) resetForm();
               }}>
                 <DialogTrigger asChild>
-                  <Button size="sm">
+                  <Button>
                     <Plus className="mr-2 h-4 w-4" />
-                    Nuevo
+                    Crear producto
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
@@ -437,10 +437,12 @@ export default function VendorDashboard() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Producto</TableHead>
+                        <TableHead className="hidden md:table-cell">Categoría</TableHead>
+                        <TableHead className="hidden sm:table-cell">Especie</TableHead>
                         <TableHead className="hidden sm:table-cell">Precio</TableHead>
                         <TableHead>Stock</TableHead>
                         <TableHead>Estado</TableHead>
-                        <TableHead className="w-[60px]"></TableHead>
+                        <TableHead className="w-[80px]"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -450,9 +452,17 @@ export default function VendorDashboard() {
                             <div>
                               <p className="font-medium">{product.name}</p>
                               <p className="text-xs text-muted-foreground sm:hidden">
-                                S/ {product.price_total_igv.toFixed(2)}
+                                S/ {product.price_total_igv.toFixed(2)} · {product.species_target}
                               </p>
                             </div>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            {(product as any).categories?.name || '—'}
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell">
+                            <Badge variant="outline" className="capitalize">
+                              {product.species_target || 'ambos'}
+                            </Badge>
                           </TableCell>
                           <TableCell className="hidden sm:table-cell">
                             S/ {product.price_total_igv.toFixed(2)}
@@ -466,10 +476,11 @@ export default function VendorDashboard() {
                           <TableCell>
                             <Button
                               variant="ghost"
-                              size="icon"
+                              size="sm"
                               onClick={() => openEditDialog(product)}
                             >
-                              <Pencil className="h-4 w-4" />
+                              <Pencil className="h-4 w-4 mr-1" />
+                              <span className="hidden sm:inline">Editar</span>
                             </Button>
                           </TableCell>
                         </TableRow>
