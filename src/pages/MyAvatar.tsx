@@ -1,17 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Pet, Product, SPECIES_LABELS, SEX_LABELS } from '@/lib/types';
-import { Sparkles, Send, ShoppingCart, Calendar, Syringe, PawPrint } from 'lucide-react';
-import { Label } from '@/components/ui/label';
+import { Pet, Product, VaccinationRecord, SPECIES_LABELS, SEX_LABELS } from '@/lib/types';
+import { Sparkles, Send, ShoppingCart, Calendar, Syringe, PawPrint, AlertCircle, MessageCircle } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { Link } from 'react-router-dom';
-import { format } from 'date-fns';
+import { format, parseISO, isPast, isWithinInterval, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -22,10 +22,12 @@ export default function MyAvatar() {
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  
   const [pets, setPets] = useState<Pet[]>([]);
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
   const [recommendations, setRecommendations] = useState<Product[]>([]);
-  const [vaccinations, setVaccinations] = useState<any[]>([]);
+  const [vaccinations, setVaccinations] = useState<VaccinationRecord[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -37,6 +39,10 @@ export default function MyAvatar() {
       fetchPets();
     }
   }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const fetchPets = async () => {
     try {
@@ -74,7 +80,7 @@ export default function MyAvatar() {
       .eq('pet_id', pet.id)
       .order('next_due_date', { ascending: true });
 
-    if (vacData) setVaccinations(vacData);
+    if (vacData) setVaccinations(vacData as VaccinationRecord[]);
 
     // Fetch recommendations based on species
     fetchRecommendations(pet.species);
@@ -82,17 +88,12 @@ export default function MyAvatar() {
 
   const fetchRecommendations = async (species: string) => {
     try {
-      // Simple rule-based recommendations
-      const categories = species === 'gato'
-        ? ['Alimento', 'Snacks', 'Premios', 'Artículos de cuidado', 'Arena para gato']
-        : ['Alimento', 'Juguetes', 'Snacks', 'Premios', 'Artículos de cuidado'];
-
       const { data, error } = await supabase
         .from('products')
         .select('*, category:categories(*)')
         .eq('is_active', true)
         .or(`species_target.eq.${species},species_target.eq.ambos`)
-        .limit(6);
+        .limit(8);
 
       if (error) throw error;
       setRecommendations(data as unknown as Product[]);
@@ -110,6 +111,8 @@ export default function MyAvatar() {
 
     // Simple rule-based responses (placeholder for future LLM integration)
     // TODO: Integrate with Lovable AI Gateway here
+    // Future implementation would call:
+    // supabase.functions.invoke('chat', { body: { messages, petContext: selectedPet } })
     setTimeout(() => {
       let response = '';
       const lowerMessage = userMessage.toLowerCase();
@@ -118,7 +121,7 @@ export default function MyAvatar() {
         if (vaccinations.length > 0) {
           const nextVac = vaccinations.find((v) => v.next_due_date);
           if (nextVac) {
-            response = `La próxima vacuna de ${selectedPet.name} es "${nextVac.vaccine_name}" programada para ${format(new Date(nextVac.next_due_date), "d 'de' MMMM", { locale: es })}. Te recomiendo agendar una cita con el veterinario pronto.`;
+            response = `La próxima vacuna de ${selectedPet.name} es "${nextVac.vaccine_name}" programada para ${format(parseISO(nextVac.next_due_date!), "d 'de' MMMM", { locale: es })}. Te recomiendo agendar una cita con el veterinario pronto.`;
           } else {
             response = `${selectedPet.name} tiene ${vaccinations.length} vacuna(s) registrada(s). No hay próximas vacunas programadas.`;
           }
@@ -128,10 +131,10 @@ export default function MyAvatar() {
       } else if (lowerMessage.includes('comida') || lowerMessage.includes('alimento') || lowerMessage.includes('comer')) {
         response = `Para ${selectedPet.name}, un ${SPECIES_LABELS[selectedPet.species].toLowerCase()} de ${selectedPet.age_years || 'edad desconocida'} años, te recomiendo un alimento de alta calidad. ¿Te gustaría ver nuestras opciones de alimentos?`;
       } else if (lowerMessage.includes('producto') || lowerMessage.includes('recomienda')) {
-        response = `Basándome en las necesidades de ${selectedPet.name}, he preparado algunas recomendaciones que puedes ver en la sección "Recomendaciones para hoy". ¡Son productos ideales para ${SPECIES_LABELS[selectedPet.species].toLowerCase()}s!`;
+        response = `Basándome en las necesidades de ${selectedPet.name}, he preparado algunas recomendaciones que puedes ver abajo. ¡Son productos ideales para ${SPECIES_LABELS[selectedPet.species].toLowerCase()}s!`;
       } else if (lowerMessage.includes('cumpleaños') || lowerMessage.includes('edad')) {
         if (selectedPet.birthday) {
-          response = `¡El cumpleaños de ${selectedPet.name} es el ${format(new Date(selectedPet.birthday), "d 'de' MMMM", { locale: es })}! 🎂`;
+          response = `¡El cumpleaños de ${selectedPet.name} es el ${format(parseISO(selectedPet.birthday), "d 'de' MMMM", { locale: es })}! 🎂`;
         } else {
           response = `No tengo registrado el cumpleaños de ${selectedPet.name}. Puedes agregarlo en la sección "Mis mascotas".`;
         }
@@ -152,6 +155,27 @@ export default function MyAvatar() {
   };
 
   const formatPrice = (price: number) => `S/ ${price.toFixed(2)}`;
+
+  const getVaccinationStatus = (nextDueDate: string | null) => {
+    if (!nextDueDate) return null;
+
+    const dueDate = parseISO(nextDueDate);
+    const today = new Date();
+    const soonThreshold = addDays(today, 30);
+
+    if (isPast(dueDate)) {
+      return { label: 'Vencida', className: 'bg-destructive/10 text-destructive' };
+    }
+    if (isWithinInterval(dueDate, { start: today, end: soonThreshold })) {
+      return { label: 'Próxima', className: 'bg-warning/10 text-warning' };
+    }
+    return { label: 'Al día', className: 'bg-success/10 text-success' };
+  };
+
+  const getNextVaccination = () => {
+    const upcoming = vaccinations.find(v => v.next_due_date && !isPast(parseISO(v.next_due_date)));
+    return upcoming;
+  };
 
   if (authLoading || isLoading) {
     return (
@@ -184,25 +208,29 @@ export default function MyAvatar() {
     );
   }
 
+  const nextVac = getNextVaccination();
+
   return (
     <Layout>
-      <div className="container py-8">
-        <div className="mb-8 flex items-center gap-3">
+      <div className="container py-6 lg:py-8">
+        {/* Header */}
+        <div className="mb-6 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-avatar">
             <Sparkles className="h-6 w-6 text-lavender-dark" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Mi Avatar</h1>
-            <p className="text-muted-foreground">Asistente digital para tu mascota</p>
+            <h1 className="text-2xl font-bold text-foreground lg:text-3xl">Mi Avatar</h1>
+            <p className="text-sm text-muted-foreground">Asistente digital para tu mascota</p>
           </div>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-3">
-          {/* Pet Selection & Info */}
-          <div className="space-y-6">
+        {/* Main Layout: Desktop side-by-side, Mobile stacked */}
+        <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
+          {/* Left Column: Pet List & Selected Pet Info */}
+          <div className="space-y-4">
             {/* Pet Selector */}
             <div className="rounded-xl border border-border bg-card p-4">
-              <Label className="mb-3 block text-sm font-medium">Selecciona mascota</Label>
+              <p className="mb-3 text-sm font-medium text-muted-foreground">Selecciona mascota</p>
               <div className="flex flex-wrap gap-2">
                 {pets.map((pet) => (
                   <Button
@@ -210,49 +238,51 @@ export default function MyAvatar() {
                     variant={selectedPet?.id === pet.id ? 'hero' : 'outline'}
                     size="sm"
                     onClick={() => selectPet(pet)}
+                    className="gap-1"
                   >
-                    {getSpeciesEmoji(pet.species)} {pet.name}
+                    <span>{getSpeciesEmoji(pet.species)}</span>
+                    <span>{pet.name}</span>
                   </Button>
                 ))}
               </div>
             </div>
 
-            {/* Pet Card */}
+            {/* Selected Pet Avatar Card */}
             {selectedPet && (
-              <div className="rounded-xl border border-border bg-gradient-avatar p-6">
+              <div className="rounded-xl border border-border bg-gradient-avatar p-5">
                 <div className="mb-4 flex items-center gap-4">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-card text-5xl shadow-md">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-card text-4xl shadow-md lg:h-20 lg:w-20 lg:text-5xl">
                     {getSpeciesEmoji(selectedPet.species)}
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-foreground">{selectedPet.name}</h2>
-                    <p className="text-muted-foreground">
+                    <h2 className="text-xl font-bold text-foreground lg:text-2xl">{selectedPet.name}</h2>
+                    <p className="text-sm text-muted-foreground">
                       {SPECIES_LABELS[selectedPet.species]} {selectedPet.breed && `• ${selectedPet.breed}`}
                     </p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="grid grid-cols-2 gap-2 text-sm">
                   {selectedPet.sex && (
-                    <div className="rounded-lg bg-card/80 p-2">
+                    <div className="rounded-lg bg-card/80 px-3 py-2">
                       <span className="text-muted-foreground">Sexo:</span>{' '}
                       <span className="font-medium">{SEX_LABELS[selectedPet.sex]}</span>
                     </div>
                   )}
                   {selectedPet.age_years && (
-                    <div className="rounded-lg bg-card/80 p-2">
+                    <div className="rounded-lg bg-card/80 px-3 py-2">
                       <span className="text-muted-foreground">Edad:</span>{' '}
                       <span className="font-medium">{selectedPet.age_years} años</span>
                     </div>
                   )}
                   {selectedPet.color && (
-                    <div className="rounded-lg bg-card/80 p-2">
+                    <div className="rounded-lg bg-card/80 px-3 py-2">
                       <span className="text-muted-foreground">Color:</span>{' '}
                       <span className="font-medium">{selectedPet.color}</span>
                     </div>
                   )}
                   {selectedPet.weight_kg && (
-                    <div className="rounded-lg bg-card/80 p-2">
+                    <div className="rounded-lg bg-card/80 px-3 py-2">
                       <span className="text-muted-foreground">Peso:</span>{' '}
                       <span className="font-medium">{selectedPet.weight_kg} kg</span>
                     </div>
@@ -260,67 +290,90 @@ export default function MyAvatar() {
                 </div>
 
                 {selectedPet.birthday && (
-                  <div className="mt-4 flex items-center gap-2 rounded-lg bg-card/80 p-3">
-                    <Calendar className="h-5 w-5 text-accent" />
+                  <div className="mt-3 flex items-center gap-2 rounded-lg bg-card/80 px-3 py-2">
+                    <Calendar className="h-4 w-4 text-accent" />
                     <span className="text-sm">
-                      Cumpleaños: {format(new Date(selectedPet.birthday), "d 'de' MMMM", { locale: es })}
+                      Cumpleaños: {format(parseISO(selectedPet.birthday), "d 'de' MMMM", { locale: es })}
                     </span>
                   </div>
                 )}
 
-                {vaccinations.length > 0 && vaccinations[0].next_due_date && (
-                  <div className="mt-3 flex items-center gap-2 rounded-lg bg-card/80 p-3">
-                    <Syringe className="h-5 w-5 text-primary" />
-                    <span className="text-sm">
-                      Próxima vacuna: {format(new Date(vaccinations[0].next_due_date), "d 'de' MMMM", { locale: es })}
-                    </span>
+                {/* Upcoming Vaccination */}
+                {nextVac && nextVac.next_due_date && (
+                  <div className="mt-3 flex items-center justify-between rounded-lg bg-card/80 px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <Syringe className="h-4 w-4 text-primary" />
+                      <div className="text-sm">
+                        <p className="font-medium">{nextVac.vaccine_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(parseISO(nextVac.next_due_date), "d 'de' MMMM", { locale: es })}
+                        </p>
+                      </div>
+                    </div>
+                    {(() => {
+                      const status = getVaccinationStatus(nextVac.next_due_date);
+                      if (!status) return null;
+                      return (
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${status.className}`}>
+                          {status.label}
+                        </span>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
             )}
           </div>
 
-          {/* Chat */}
-          <div className="lg:col-span-2">
-            <div className="flex h-[600px] flex-col rounded-xl border border-border bg-card">
+          {/* Right Column: Chat & Recommendations */}
+          <div className="space-y-6">
+            {/* Chat Panel */}
+            <div className="flex h-[400px] flex-col rounded-xl border border-border bg-card lg:h-[480px]">
               {/* Chat Header */}
-              <div className="border-b border-border p-4">
-                <h3 className="font-semibold text-foreground">
-                  Asistente de {selectedPet?.name}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Pregúntame sobre productos, vacunas o cuidados
-                </p>
+              <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+                <MessageCircle className="h-5 w-5 text-primary" />
+                <div>
+                  <h3 className="font-semibold text-foreground">
+                    Asistente de {selectedPet?.name}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Pregúntame sobre productos, vacunas o cuidados
+                  </p>
+                </div>
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messages.map((msg, i) => (
-                  <div
-                    key={i}
-                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
+              <ScrollArea className="flex-1 p-4">
+                <div className="space-y-3">
+                  {messages.map((msg, i) => (
                     <div
-                      className={`max-w-[80%] rounded-2xl px-4 py-2 ${
-                        msg.role === 'user'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-foreground'
-                      }`}
+                      key={i}
+                      className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
-                      {msg.content}
+                      <div
+                        className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
+                          msg.role === 'user'
+                            ? 'rounded-br-md bg-primary text-primary-foreground'
+                            : 'rounded-bl-md bg-muted text-foreground'
+                        }`}
+                      >
+                        {msg.content}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                  <div ref={messagesEndRef} />
+                </div>
+              </ScrollArea>
 
-              {/* Input */}
-              <div className="border-t border-border p-4">
+              {/* Input - Fixed at bottom */}
+              <div className="border-t border-border p-3">
                 <div className="flex gap-2">
                   <Input
                     placeholder="Escribe tu mensaje..."
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                    className="flex-1"
                   />
                   <Button variant="hero" size="icon" onClick={handleSendMessage}>
                     <Send className="h-4 w-4" />
@@ -329,47 +382,49 @@ export default function MyAvatar() {
               </div>
             </div>
 
-            {/* Recommendations */}
+            {/* Recommendations - Horizontal Scroll */}
             {recommendations.length > 0 && (
-              <div className="mt-6">
-                <h3 className="mb-4 text-lg font-semibold text-foreground">
-                  Recomendaciones para hoy
+              <div>
+                <h3 className="mb-3 text-lg font-semibold text-foreground">
+                  Recomendaciones para {selectedPet?.name}
                 </h3>
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-                  {recommendations.map((product) => (
-                    <div
-                      key={product.id}
-                      className="rounded-lg border border-border bg-card p-3 transition-all hover:border-primary/50"
-                    >
-                      <div className="mb-2 aspect-square overflow-hidden rounded-lg bg-muted">
-                        {product.image_url ? (
-                          <img
-                            src={product.image_url}
-                            alt={product.name}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-full items-center justify-center text-3xl">📦</div>
-                        )}
+                <div className="relative -mx-4 px-4 lg:mx-0 lg:px-0">
+                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
+                    {recommendations.map((product) => (
+                      <div
+                        key={product.id}
+                        className="w-[140px] shrink-0 snap-start rounded-lg border border-border bg-card p-3 transition-all hover:border-primary/50 lg:w-[160px]"
+                      >
+                        <div className="mb-2 aspect-square overflow-hidden rounded-lg bg-muted">
+                          {product.image_url ? (
+                            <img
+                              src={product.image_url}
+                              alt={product.name}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center text-3xl">📦</div>
+                          )}
+                        </div>
+                        <p className="line-clamp-2 text-xs font-medium text-foreground lg:text-sm">
+                          {product.name}
+                        </p>
+                        <div className="mt-2 flex items-center justify-between">
+                          <span className="text-xs font-bold text-primary lg:text-sm">
+                            {formatPrice(product.price_total_igv)}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => addToCart(product)}
+                          >
+                            <ShoppingCart className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
-                      <p className="line-clamp-1 text-sm font-medium text-foreground">
-                        {product.name}
-                      </p>
-                      <div className="mt-2 flex items-center justify-between">
-                        <span className="text-sm font-bold text-primary">
-                          {formatPrice(product.price_total_igv)}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => addToCart(product)}
-                        >
-                          <ShoppingCart className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
