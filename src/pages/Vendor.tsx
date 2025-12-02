@@ -14,8 +14,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Package, Mail, Phone, Building2, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Package, Mail, Phone, Building2, Loader2, ImageIcon } from 'lucide-react';
 import { Product, Category, Vendor } from '@/lib/types';
+import { ProductImages } from '@/components/products/ProductImages';
 
 export default function VendorDashboard() {
   const { user, isLoading: authLoading, hasRole } = useAuth();
@@ -383,16 +384,36 @@ export default function VendorDashboard() {
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="image_url">URL de imagen</Label>
-                      <Input
-                        id="image_url"
-                        type="url"
-                        value={formData.image_url}
-                        onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                        placeholder="https://..."
-                      />
-                    </div>
+                    {/* Product Images - Only show when editing existing product */}
+                    {editingProduct ? (
+                      <div className="space-y-2 rounded-lg border border-border p-3">
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          <ImageIcon className="h-4 w-4 text-primary" />
+                          Galería de imágenes
+                        </div>
+                        <ProductImages 
+                          productId={editingProduct.id} 
+                          productName={editingProduct.name}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Sube hasta 4 imágenes. La primera será la imagen principal.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Label htmlFor="image_url">URL de imagen (temporal)</Label>
+                        <Input
+                          id="image_url"
+                          type="url"
+                          value={formData.image_url}
+                          onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                          placeholder="https://..."
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Podrás subir más imágenes después de crear el producto.
+                        </p>
+                      </div>
+                    )}
 
                     <div className="flex flex-wrap gap-6">
                       <div className="flex items-center gap-2">

@@ -6,16 +6,135 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Pet, Product, VaccinationRecord, SPECIES_LABELS, SEX_LABELS } from '@/lib/types';
-import { Sparkles, Send, ShoppingCart, Calendar, Syringe, PawPrint, AlertCircle, MessageCircle } from 'lucide-react';
+import { Sparkles, Send, ShoppingCart, Calendar, Syringe, PawPrint, MessageCircle } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { Link } from 'react-router-dom';
 import { format, parseISO, isPast, isWithinInterval, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useMainPetPhoto } from '@/hooks/useMainPetPhoto';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+}
+
+// Pet Avatar Card with photo integration
+function PetAvatarCard({ 
+  pet, 
+  vaccinations,
+  getVaccinationStatus 
+}: { 
+  pet: Pet; 
+  vaccinations: VaccinationRecord[];
+  getVaccinationStatus: (date: string | null) => { label: string; className: string } | null;
+}) {
+  const { mainPhoto } = useMainPetPhoto(pet.id);
+  const nextVac = vaccinations.find(v => v.next_due_date && !isPast(parseISO(v.next_due_date)));
+
+  const getSpeciesEmoji = (species: string) => {
+    switch (species) {
+      case 'perro': return '🐕';
+      case 'gato': return '🐱';
+      default: return '🐾';
+    }
+  };
+
+  return (
+    <div 
+      className="rounded-xl border border-border p-5 transition-colors"
+      style={{ 
+        background: mainPhoto.url 
+          ? `linear-gradient(135deg, ${mainPhoto.accentColor}, ${mainPhoto.dominantColor}20)` 
+          : 'var(--gradient-avatar, linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--primary) / 0.2)))'
+      }}
+    >
+      <div className="mb-4 flex items-center gap-4">
+        {/* Pet Photo or Emoji */}
+        <div className="relative h-16 w-16 overflow-hidden rounded-full bg-card shadow-md lg:h-20 lg:w-20">
+          {mainPhoto.url ? (
+            <img
+              src={mainPhoto.url}
+              alt={pet.name}
+              className="h-full w-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-4xl lg:text-5xl">
+              {getSpeciesEmoji(pet.species)}
+            </div>
+          )}
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-foreground lg:text-2xl">{pet.name}</h2>
+          <p className="text-sm text-muted-foreground">
+            {SPECIES_LABELS[pet.species]} {pet.breed && `• ${pet.breed}`}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 text-sm">
+        {pet.sex && (
+          <div className="rounded-lg bg-card/80 px-3 py-2">
+            <span className="text-muted-foreground">Sexo:</span>{' '}
+            <span className="font-medium">{SEX_LABELS[pet.sex]}</span>
+          </div>
+        )}
+        {pet.age_years && (
+          <div className="rounded-lg bg-card/80 px-3 py-2">
+            <span className="text-muted-foreground">Edad:</span>{' '}
+            <span className="font-medium">{pet.age_years} años</span>
+          </div>
+        )}
+        {pet.color && (
+          <div className="rounded-lg bg-card/80 px-3 py-2">
+            <span className="text-muted-foreground">Color:</span>{' '}
+            <span className="font-medium">{pet.color}</span>
+          </div>
+        )}
+        {pet.weight_kg && (
+          <div className="rounded-lg bg-card/80 px-3 py-2">
+            <span className="text-muted-foreground">Peso:</span>{' '}
+            <span className="font-medium">{pet.weight_kg} kg</span>
+          </div>
+        )}
+      </div>
+
+      {pet.birthday && (
+        <div className="mt-3 flex items-center gap-2 rounded-lg bg-card/80 px-3 py-2">
+          <Calendar className="h-4 w-4 text-accent" />
+          <span className="text-sm">
+            Cumpleaños: {format(parseISO(pet.birthday), "d 'de' MMMM", { locale: es })}
+          </span>
+        </div>
+      )}
+
+      {nextVac && nextVac.next_due_date && (
+        <div className="mt-3 flex items-center justify-between rounded-lg bg-card/80 px-3 py-2">
+          <div className="flex items-center gap-2">
+            <Syringe className="h-4 w-4 text-primary" />
+            <div className="text-sm">
+              <p className="font-medium">{nextVac.vaccine_name}</p>
+              <p className="text-xs text-muted-foreground">
+                {format(parseISO(nextVac.next_due_date), "d 'de' MMMM", { locale: es })}
+              </p>
+            </div>
+          </div>
+          {(() => {
+            const status = getVaccinationStatus(nextVac.next_due_date);
+            if (!status) return null;
+            return (
+              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${status.className}`}>
+                {status.label}
+              </span>
+            );
+          })()}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function MyAvatar() {
@@ -73,7 +192,6 @@ export default function MyAvatar() {
       },
     ]);
 
-    // Fetch vaccinations
     const { data: vacData } = await supabase
       .from('vaccination_records')
       .select('*')
@@ -81,8 +199,6 @@ export default function MyAvatar() {
       .order('next_due_date', { ascending: true });
 
     if (vacData) setVaccinations(vacData as VaccinationRecord[]);
-
-    // Fetch recommendations based on species
     fetchRecommendations(pet.species);
   };
 
@@ -109,10 +225,6 @@ export default function MyAvatar() {
     setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
     setInputMessage('');
 
-    // Simple rule-based responses (placeholder for future LLM integration)
-    // TODO: Integrate with Lovable AI Gateway here
-    // Future implementation would call:
-    // supabase.functions.invoke('chat', { body: { messages, petContext: selectedPet } })
     setTimeout(() => {
       let response = '';
       const lowerMessage = userMessage.toLowerCase();
@@ -172,11 +284,6 @@ export default function MyAvatar() {
     return { label: 'Al día', className: 'bg-success/10 text-success' };
   };
 
-  const getNextVaccination = () => {
-    const upcoming = vaccinations.find(v => v.next_due_date && !isPast(parseISO(v.next_due_date)));
-    return upcoming;
-  };
-
   if (authLoading || isLoading) {
     return (
       <Layout>
@@ -208,8 +315,6 @@ export default function MyAvatar() {
     );
   }
 
-  const nextVac = getNextVaccination();
-
   return (
     <Layout>
       <div className="container py-6 lg:py-8">
@@ -224,9 +329,9 @@ export default function MyAvatar() {
           </div>
         </div>
 
-        {/* Main Layout: Desktop side-by-side, Mobile stacked */}
+        {/* Main Layout */}
         <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
-          {/* Left Column: Pet List & Selected Pet Info */}
+          {/* Left Column */}
           <div className="space-y-4">
             {/* Pet Selector */}
             <div className="rounded-xl border border-border bg-card p-4">
@@ -247,81 +352,13 @@ export default function MyAvatar() {
               </div>
             </div>
 
-            {/* Selected Pet Avatar Card */}
+            {/* Pet Avatar Card with Photo */}
             {selectedPet && (
-              <div className="rounded-xl border border-border bg-gradient-avatar p-5">
-                <div className="mb-4 flex items-center gap-4">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-card text-4xl shadow-md lg:h-20 lg:w-20 lg:text-5xl">
-                    {getSpeciesEmoji(selectedPet.species)}
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-foreground lg:text-2xl">{selectedPet.name}</h2>
-                    <p className="text-sm text-muted-foreground">
-                      {SPECIES_LABELS[selectedPet.species]} {selectedPet.breed && `• ${selectedPet.breed}`}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  {selectedPet.sex && (
-                    <div className="rounded-lg bg-card/80 px-3 py-2">
-                      <span className="text-muted-foreground">Sexo:</span>{' '}
-                      <span className="font-medium">{SEX_LABELS[selectedPet.sex]}</span>
-                    </div>
-                  )}
-                  {selectedPet.age_years && (
-                    <div className="rounded-lg bg-card/80 px-3 py-2">
-                      <span className="text-muted-foreground">Edad:</span>{' '}
-                      <span className="font-medium">{selectedPet.age_years} años</span>
-                    </div>
-                  )}
-                  {selectedPet.color && (
-                    <div className="rounded-lg bg-card/80 px-3 py-2">
-                      <span className="text-muted-foreground">Color:</span>{' '}
-                      <span className="font-medium">{selectedPet.color}</span>
-                    </div>
-                  )}
-                  {selectedPet.weight_kg && (
-                    <div className="rounded-lg bg-card/80 px-3 py-2">
-                      <span className="text-muted-foreground">Peso:</span>{' '}
-                      <span className="font-medium">{selectedPet.weight_kg} kg</span>
-                    </div>
-                  )}
-                </div>
-
-                {selectedPet.birthday && (
-                  <div className="mt-3 flex items-center gap-2 rounded-lg bg-card/80 px-3 py-2">
-                    <Calendar className="h-4 w-4 text-accent" />
-                    <span className="text-sm">
-                      Cumpleaños: {format(parseISO(selectedPet.birthday), "d 'de' MMMM", { locale: es })}
-                    </span>
-                  </div>
-                )}
-
-                {/* Upcoming Vaccination */}
-                {nextVac && nextVac.next_due_date && (
-                  <div className="mt-3 flex items-center justify-between rounded-lg bg-card/80 px-3 py-2">
-                    <div className="flex items-center gap-2">
-                      <Syringe className="h-4 w-4 text-primary" />
-                      <div className="text-sm">
-                        <p className="font-medium">{nextVac.vaccine_name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(parseISO(nextVac.next_due_date), "d 'de' MMMM", { locale: es })}
-                        </p>
-                      </div>
-                    </div>
-                    {(() => {
-                      const status = getVaccinationStatus(nextVac.next_due_date);
-                      if (!status) return null;
-                      return (
-                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${status.className}`}>
-                          {status.label}
-                        </span>
-                      );
-                    })()}
-                  </div>
-                )}
-              </div>
+              <PetAvatarCard 
+                pet={selectedPet} 
+                vaccinations={vaccinations} 
+                getVaccinationStatus={getVaccinationStatus} 
+              />
             )}
           </div>
 
@@ -329,7 +366,6 @@ export default function MyAvatar() {
           <div className="space-y-6">
             {/* Chat Panel */}
             <div className="flex h-[400px] flex-col rounded-xl border border-border bg-card lg:h-[480px]">
-              {/* Chat Header */}
               <div className="flex items-center gap-2 border-b border-border px-4 py-3">
                 <MessageCircle className="h-5 w-5 text-primary" />
                 <div>
@@ -342,7 +378,6 @@ export default function MyAvatar() {
                 </div>
               </div>
 
-              {/* Messages */}
               <ScrollArea className="flex-1 p-4">
                 <div className="space-y-3">
                   {messages.map((msg, i) => (
@@ -365,7 +400,6 @@ export default function MyAvatar() {
                 </div>
               </ScrollArea>
 
-              {/* Input - Fixed at bottom */}
               <div className="border-t border-border p-3">
                 <div className="flex gap-2">
                   <Input
@@ -382,7 +416,7 @@ export default function MyAvatar() {
               </div>
             </div>
 
-            {/* Recommendations - Horizontal Scroll */}
+            {/* Recommendations */}
             {recommendations.length > 0 && (
               <div>
                 <h3 className="mb-3 text-lg font-semibold text-foreground">
