@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Pet, PetSpecies, PetSex, SPECIES_LABELS, SEX_LABELS } from '@/lib/types';
-import { Plus, Edit2, Trash2, X, PawPrint, Camera } from 'lucide-react';
+import { Plus, Edit2, Trash2, PawPrint, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { PetDetailSheet } from '@/components/pets/PetDetailSheet';
 
 const emptyPet = {
   name: '',
@@ -45,6 +46,10 @@ export default function MyPets() {
   const [editingPet, setEditingPet] = useState<Pet | null>(null);
   const [formData, setFormData] = useState(emptyPet);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Pet detail sheet state
+  const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -122,6 +127,11 @@ export default function MyPets() {
 
         if (error) throw error;
         toast.success('Mascota actualizada');
+        
+        // Update selected pet if viewing detail
+        if (selectedPet?.id === editingPet.id) {
+          setSelectedPet({ ...selectedPet, ...petData } as Pet);
+        }
       } else {
         const { error } = await supabase.from('pets').insert(petData);
 
@@ -139,7 +149,8 @@ export default function MyPets() {
     }
   };
 
-  const handleDelete = async (petId: string) => {
+  const handleDelete = async (petId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     if (!confirm('¿Estás seguro de eliminar esta mascota?')) return;
 
     try {
@@ -147,11 +158,28 @@ export default function MyPets() {
 
       if (error) throw error;
       toast.success('Mascota eliminada');
+      
+      // Close detail sheet if this pet was being viewed
+      if (selectedPet?.id === petId) {
+        setIsDetailOpen(false);
+        setSelectedPet(null);
+      }
+      
       fetchPets();
     } catch (error) {
       console.error('Error deleting pet:', error);
       toast.error('Error al eliminar. Intenta nuevamente.');
     }
+  };
+
+  const handleOpenDetail = (pet: Pet) => {
+    setSelectedPet(pet);
+    setIsDetailOpen(true);
+  };
+
+  const handleEditFromDetail = (pet: Pet) => {
+    setIsDetailOpen(false);
+    handleOpenDialog(pet);
   };
 
   const getSpeciesEmoji = (species: PetSpecies) => {
@@ -180,10 +208,11 @@ export default function MyPets() {
     <Layout>
       <div className="container py-8">
         <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-foreground">Mis mascotas</h1>
+          <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Mis mascotas</h1>
           <Button variant="hero" onClick={() => handleOpenDialog()}>
             <Plus className="h-4 w-4" />
-            Agregar mascota
+            <span className="hidden sm:inline">Agregar mascota</span>
+            <span className="sm:hidden">Agregar</span>
           </Button>
         </div>
 
@@ -202,41 +231,52 @@ export default function MyPets() {
             </Button>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {pets.map((pet) => (
               <div
                 key={pet.id}
-                className="group rounded-xl border border-border bg-card p-6 transition-all hover:border-primary/50 hover:shadow-md"
+                onClick={() => handleOpenDetail(pet)}
+                className="group cursor-pointer rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-md sm:p-6"
               >
-                <div className="mb-4 flex items-start justify-between">
+                <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-avatar text-3xl">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-avatar text-2xl sm:h-14 sm:w-14 sm:text-3xl">
                       {getSpeciesEmoji(pet.species)}
                     </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-foreground">{pet.name}</h3>
+                    <div className="min-w-0">
+                      <h3 className="truncate text-lg font-semibold text-foreground sm:text-xl">{pet.name}</h3>
                       <p className="text-sm text-muted-foreground">
                         {SPECIES_LABELS[pet.species]} {pet.breed && `• ${pet.breed}`}
                       </p>
                     </div>
                   </div>
                   
-                  <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                    <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(pet)}>
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive"
-                      onClick={() => handleDelete(pet.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                  <div className="flex items-center gap-1">
+                    <div className="hidden gap-1 opacity-0 transition-opacity group-hover:opacity-100 sm:flex">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenDialog(pet);
+                        }}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive"
+                        onClick={(e) => handleDelete(pet.id, e)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1" />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
                   {pet.sex && (
                     <div>
                       <span className="text-muted-foreground">Sexo:</span>{' '}
@@ -273,7 +313,15 @@ export default function MyPets() {
           </div>
         )}
 
-        {/* Dialog */}
+        {/* Pet Detail Sheet */}
+        <PetDetailSheet
+          pet={selectedPet}
+          isOpen={isDetailOpen}
+          onClose={() => setIsDetailOpen(false)}
+          onEdit={handleEditFromDetail}
+        />
+
+        {/* Dialog for Add/Edit Pet */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
             <DialogHeader>
