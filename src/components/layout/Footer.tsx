@@ -1,22 +1,14 @@
+import { Heart, Mail, Phone } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { PawPrint, Heart, Mail, Phone } from 'lucide-react';
+import { Logo } from '@/components/Logo';
+
 export function Footer() {
   return <footer className="border-t border-border bg-muted/30">
       <div className="container py-12">
         <div className="grid gap-8 md:grid-cols-4">
           {/* Brand */}
           <div className="space-y-4">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-hero">
-                <PawPrint className="h-6 w-6 text-primary-foreground" />
-              </div>
-              <span className="text-xl font-bold">
-                Kusi <span className="text-primary">Pet</span>
-              </span>
-            </Link>
-            <p className="text-sm text-muted-foreground">
-              El ecosistema inteligente para el bienestar total de tu mascota.
-            </p>
+            <Logo size="sm" showSlogan sloganPosition="bottom" />
           </div>
 
           {/* Links */}

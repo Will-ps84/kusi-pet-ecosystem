@@ -1,10 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Menu, X, PawPrint, LogOut } from 'lucide-react';
+import { ShoppingCart, User, Menu, X, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useState } from 'react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Logo } from '@/components/Logo';
+
 export function Header() {
   const {
     user,
@@ -37,13 +39,7 @@ export function Header() {
   return <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container h-16 items-center justify-between flex flex-row">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 transition-transform hover:scale-105">
-          <div className="flex h-10 w-10 items-center justify-center bg-gradient-hero shadow-glow rounded-3xl">
-            <PawPrint className="h-6 w-6 text-primary-foreground" />
-          </div>
-          <span className="font-bold text-foreground text-3xl">Kusi Pet<span className="text-primary">Pet</span>
-          </span>
-        </Link>
+        <Logo size="md" />
 
         {/* Desktop Navigation */}
         <nav className="hidden items-center gap-6 md:flex">
