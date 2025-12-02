@@ -123,6 +123,9 @@ export function Header() {
             {hasRole('admin') && <Link to="/admin" className="rounded-lg px-4 py-2 text-sm font-medium text-accent transition-colors hover:bg-muted" onClick={() => setMobileMenuOpen(false)}>
                 Admin
               </Link>}
+            {hasRole('vendor') && <Link to="/vendor" className="rounded-lg px-4 py-2 text-sm font-medium text-accent transition-colors hover:bg-muted" onClick={() => setMobileMenuOpen(false)}>
+                Vendedor
+              </Link>}
             {!user && <div className="flex gap-2 pt-2">
                 <Link to="/auth" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
                   <Button variant="outline" className="w-full">
