@@ -438,7 +438,7 @@ export default function VendorDashboard() {
                       <TableRow>
                         <TableHead>Producto</TableHead>
                         <TableHead className="hidden sm:table-cell">Precio</TableHead>
-                        <TableHead className="hidden sm:table-cell">Stock</TableHead>
+                        <TableHead>Stock</TableHead>
                         <TableHead>Estado</TableHead>
                         <TableHead className="w-[60px]"></TableHead>
                       </TableRow>
@@ -450,14 +450,14 @@ export default function VendorDashboard() {
                             <div>
                               <p className="font-medium">{product.name}</p>
                               <p className="text-xs text-muted-foreground sm:hidden">
-                                S/ {product.price_total_igv.toFixed(2)} · Stock: {product.stock ?? 0}
+                                S/ {product.price_total_igv.toFixed(2)}
                               </p>
                             </div>
                           </TableCell>
                           <TableCell className="hidden sm:table-cell">
                             S/ {product.price_total_igv.toFixed(2)}
                           </TableCell>
-                          <TableCell className="hidden sm:table-cell">{product.stock ?? 0}</TableCell>
+                          <TableCell>{product.stock ?? 0}</TableCell>
                           <TableCell>
                             <Badge variant={product.is_active ? 'default' : 'secondary'}>
                               {product.is_active ? 'Activo' : 'Inactivo'}
