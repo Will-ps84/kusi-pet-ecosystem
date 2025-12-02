@@ -15,6 +15,7 @@ import OrderDetail from "./pages/OrderDetail";
 import MyPets from "./pages/MyPets";
 import MyAvatar from "./pages/MyAvatar";
 import MyProfile from "./pages/MyProfile";
+import Vendor from "./pages/Vendor";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
               <Route path="/mis-mascotas" element={<MyPets />} />
               <Route path="/mi-avatar" element={<MyAvatar />} />
               <Route path="/mi-perfil" element={<MyProfile />} />
+              <Route path="/vendor" element={<Vendor />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
