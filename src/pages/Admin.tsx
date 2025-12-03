@@ -35,6 +35,7 @@ interface OrderWithProfile {
   payment_method: string;
   delivery_address: string;
   district: string | null;
+  telefono: string | null;
   notes: string | null;
   user_id: string;
   profile?: Profile | null;
@@ -350,6 +351,7 @@ export default function Admin() {
                     <TableRow>
                       <TableHead className="min-w-[100px]">Pedido</TableHead>
                       <TableHead className="hidden sm:table-cell">Cliente</TableHead>
+                      <TableHead className="hidden lg:table-cell">Teléfono</TableHead>
                       <TableHead className="hidden md:table-cell">Fecha</TableHead>
                       <TableHead>Total</TableHead>
                       <TableHead>Estado</TableHead>
@@ -372,6 +374,9 @@ export default function Admin() {
                             <p className="font-medium text-sm">{order.profile?.full_name || 'Sin nombre'}</p>
                             <p className="text-xs text-muted-foreground">{order.profile?.email}</p>
                           </div>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell text-sm">
+                          {order.telefono || <span className="text-muted-foreground">-</span>}
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-sm">
                           {order.created_at && format(new Date(order.created_at), 'dd MMM yyyy HH:mm', { locale: es })}
@@ -450,6 +455,7 @@ export default function Admin() {
                     <div className="rounded-lg bg-muted p-3 text-sm space-y-1">
                       <p><span className="text-muted-foreground">Dirección:</span> {selectedOrder.delivery_address}</p>
                       <p><span className="text-muted-foreground">Distrito:</span> {selectedOrder.district || 'N/A'}</p>
+                      <p><span className="text-muted-foreground">Teléfono:</span> {selectedOrder.telefono || 'N/A'}</p>
                       <p><span className="text-muted-foreground">Método de pago:</span> {selectedOrder.payment_method}</p>
                       {selectedOrder.notes && (
                         <p><span className="text-muted-foreground">Notas:</span> {selectedOrder.notes}</p>

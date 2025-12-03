@@ -16,6 +16,7 @@ interface OrderRequest {
   items: CartItem[];
   delivery_address: string;
   district: string;
+  telefono?: string;
   notes?: string;
 }
 
@@ -59,7 +60,7 @@ serve(async (req) => {
 
     // Parse request body
     const body: OrderRequest = await req.json();
-    const { items, delivery_address, district, notes } = body;
+    const { items, delivery_address, district, telefono, notes } = body;
 
     // Validate request
     if (!items || items.length === 0) {
@@ -139,6 +140,7 @@ serve(async (req) => {
         user_id: user.id,
         delivery_address,
         district: district || null,
+        telefono: telefono || null,
         notes: notes || null,
         delivery_fee,
         total_products_amount,

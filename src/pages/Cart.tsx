@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -24,12 +24,45 @@ export default function Cart() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [isLoadingPrevData, setIsLoadingPrevData] = useState(false);
   const [checkoutData, setCheckoutData] = useState({
     address: '',
     district: '',
+    telefono: '',
     paymentMethod: 'efectivo' as PaymentMethod,
     notes: '',
   });
+
+  // Prefill from last order when user is available
+  useEffect(() => {
+    const fetchLastOrderData = async () => {
+      if (!user) return;
+      setIsLoadingPrevData(true);
+      try {
+        const { data } = await supabase
+          .from('orders')
+          .select('delivery_address, district, telefono')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        
+        if (data) {
+          setCheckoutData(prev => ({
+            ...prev,
+            address: data.delivery_address || prev.address,
+            district: data.district || prev.district,
+            telefono: data.telefono || prev.telefono,
+          }));
+        }
+      } catch (error) {
+        // No previous orders, that's fine
+      } finally {
+        setIsLoadingPrevData(false);
+      }
+    };
+    fetchLastOrderData();
+  }, [user]);
 
   const formatPrice = (price: number) => `S/ ${price.toFixed(2)}`;
 
@@ -42,6 +75,11 @@ export default function Cart() {
 
     if (!checkoutData.address.trim()) {
       toast.error('Ingresa tu dirección de entrega');
+      return;
+    }
+
+    if (!checkoutData.telefono.trim() || checkoutData.telefono.trim().length < 7) {
+      toast.error('Ingresa un teléfono de contacto válido');
       return;
     }
 
@@ -59,6 +97,7 @@ export default function Cart() {
           payment_method: checkoutData.paymentMethod,
           delivery_address: checkoutData.address,
           district: checkoutData.district || null,
+          telefono: checkoutData.telefono || null,
           notes: checkoutData.notes || null,
         })
         .select()
@@ -243,6 +282,17 @@ export default function Cart() {
                     placeholder="Miraflores"
                     value={checkoutData.district}
                     onChange={(e) => setCheckoutData({ ...checkoutData, district: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="telefono">Teléfono de contacto *</Label>
+                  <Input
+                    id="telefono"
+                    placeholder="987654321"
+                    value={checkoutData.telefono}
+                    onChange={(e) => setCheckoutData({ ...checkoutData, telefono: e.target.value })}
+                    maxLength={15}
                   />
                 </div>
 

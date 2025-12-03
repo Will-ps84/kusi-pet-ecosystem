@@ -21,7 +21,7 @@ interface AssistantCartProps {
   onRemoveItem: (productId: string) => void;
   onClearCart: () => void;
   onOrderConfirmed: (orderSummary: OrderSummary) => void;
-  lastDeliveryInfo: { address: string; district: string } | null;
+  lastDeliveryInfo: { address: string; district: string; telefono: string } | null;
 }
 
 interface OrderSummary {
@@ -48,6 +48,7 @@ export function AssistantCart({
   const [deliveryForm, setDeliveryForm] = useState({
     address: lastDeliveryInfo?.address || '',
     district: lastDeliveryInfo?.district || '',
+    telefono: lastDeliveryInfo?.telefono || '',
     notes: '',
   });
 
@@ -58,15 +59,15 @@ export function AssistantCart({
 
   const handleConfirmOrder = async () => {
     // If we have saved delivery info, use it directly
-    if (lastDeliveryInfo) {
-      await submitOrder(lastDeliveryInfo.address, lastDeliveryInfo.district, '');
+    if (lastDeliveryInfo && lastDeliveryInfo.telefono) {
+      await submitOrder(lastDeliveryInfo.address, lastDeliveryInfo.district, lastDeliveryInfo.telefono, '');
     } else {
       // Show delivery form dialog
       setIsDeliveryDialogOpen(true);
     }
   };
 
-  const submitOrder = async (address: string, district: string, notes: string) => {
+  const submitOrder = async (address: string, district: string, telefono: string, notes: string) => {
     setIsSubmitting(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -84,6 +85,7 @@ export function AssistantCart({
           })),
           delivery_address: address,
           district: district,
+          telefono: telefono,
           notes: notes,
         },
       });
@@ -115,7 +117,11 @@ export function AssistantCart({
       toast.error('La dirección es requerida');
       return;
     }
-    submitOrder(deliveryForm.address, deliveryForm.district, deliveryForm.notes);
+    if (!deliveryForm.telefono.trim() || deliveryForm.telefono.trim().length < 7) {
+      toast.error('Ingresa un teléfono de contacto válido');
+      return;
+    }
+    submitOrder(deliveryForm.address, deliveryForm.district, deliveryForm.telefono, deliveryForm.notes);
   };
 
   if (items.length === 0) {
@@ -286,6 +292,17 @@ export function AssistantCart({
                 value={deliveryForm.district}
                 onChange={(e) => setDeliveryForm({ ...deliveryForm, district: e.target.value })}
                 placeholder="Miraflores"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="telefono">Teléfono de contacto *</Label>
+              <Input
+                id="telefono"
+                value={deliveryForm.telefono}
+                onChange={(e) => setDeliveryForm({ ...deliveryForm, telefono: e.target.value })}
+                placeholder="987654321"
+                maxLength={15}
+                required
               />
             </div>
             <div className="space-y-2">
