@@ -10,11 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ShoppingBag, DollarSign, Users, Package, Eye, RefreshCw } from 'lucide-react';
+import { Loader2, ShoppingBag, DollarSign, Users, Package, Eye, RefreshCw, Heart } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Database } from '@/integrations/supabase/types';
+import { AdminCommunity } from '@/components/admin/AdminCommunity';
 
 type OrderStatus = Database['public']['Enums']['order_status'];
 
@@ -315,93 +317,113 @@ export default function Admin() {
           </Card>
         </div>
 
-        {/* Orders Section */}
-        <Card>
-          <CardHeader className="flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <ShoppingBag className="h-5 w-5 text-primary" />
-                Gestión de Pedidos
-              </CardTitle>
-              <CardDescription>{orders.length} pedidos totales</CardDescription>
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Filtrar por estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los estados</SelectItem>
-                {ORDER_STATUSES.map(status => (
-                  <SelectItem key={status.value} value={status.value}>
-                    {status.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </CardHeader>
-          <CardContent>
-            {filteredOrders.length === 0 ? (
-              <p className="py-8 text-center text-muted-foreground">
-                No hay pedidos {statusFilter !== 'all' ? `con estado "${statusFilter}"` : ''}
-              </p>
-            ) : (
-              <div className="overflow-x-auto -mx-6 px-6">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="min-w-[100px]">Pedido</TableHead>
-                      <TableHead className="hidden sm:table-cell">Cliente</TableHead>
-                      <TableHead className="hidden lg:table-cell">Teléfono</TableHead>
-                      <TableHead className="hidden md:table-cell">Fecha</TableHead>
-                      <TableHead>Total</TableHead>
-                      <TableHead>Estado</TableHead>
-                      <TableHead className="w-[60px]"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredOrders.map((order) => (
-                      <TableRow key={order.id}>
-                        <TableCell>
-                          <div>
-                            <p className="font-mono text-xs">{order.id.slice(0, 8)}...</p>
-                            <p className="text-xs text-muted-foreground sm:hidden">
-                              {order.profile?.full_name || order.profile?.email || 'Sin nombre'}
-                            </p>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          <div>
-                            <p className="font-medium text-sm">{order.profile?.full_name || 'Sin nombre'}</p>
-                            <p className="text-xs text-muted-foreground">{order.profile?.email}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell text-sm">
-                          {order.telefono || <span className="text-muted-foreground">-</span>}
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell text-sm">
-                          {order.created_at && format(new Date(order.created_at), 'dd MMM yyyy HH:mm', { locale: es })}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          S/ {order.total_amount.toFixed(2)}
-                        </TableCell>
-                        <TableCell>{getStatusBadge(order.status)}</TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openOrderDetail(order)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
+        {/* Tabs for different sections */}
+        <Tabs defaultValue="orders" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="orders" className="gap-2">
+              <ShoppingBag className="h-4 w-4" />
+              Pedidos
+            </TabsTrigger>
+            <TabsTrigger value="comunidad" className="gap-2">
+              <Heart className="h-4 w-4" />
+              Comunidad
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="orders" className="space-y-4">
+            {/* Orders Section */}
+            <Card>
+              <CardHeader className="flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <ShoppingBag className="h-5 w-5 text-primary" />
+                    Gestión de Pedidos
+                  </CardTitle>
+                  <CardDescription>{orders.length} pedidos totales</CardDescription>
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectValue placeholder="Filtrar por estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los estados</SelectItem>
+                    {ORDER_STATUSES.map(status => (
+                      <SelectItem key={status.value} value={status.value}>
+                        {status.label}
+                      </SelectItem>
                     ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  </SelectContent>
+                </Select>
+              </CardHeader>
+              <CardContent>
+                {filteredOrders.length === 0 ? (
+                  <p className="py-8 text-center text-muted-foreground">
+                    No hay pedidos {statusFilter !== 'all' ? `con estado "${statusFilter}"` : ''}
+                  </p>
+                ) : (
+                  <div className="overflow-x-auto -mx-6 px-6">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="min-w-[100px]">Pedido</TableHead>
+                          <TableHead className="hidden sm:table-cell">Cliente</TableHead>
+                          <TableHead className="hidden lg:table-cell">Teléfono</TableHead>
+                          <TableHead className="hidden md:table-cell">Fecha</TableHead>
+                          <TableHead>Total</TableHead>
+                          <TableHead>Estado</TableHead>
+                          <TableHead className="w-[60px]"></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredOrders.map((order) => (
+                          <TableRow key={order.id}>
+                            <TableCell>
+                              <div>
+                                <p className="font-mono text-xs">{order.id.slice(0, 8)}...</p>
+                                <p className="text-xs text-muted-foreground sm:hidden">
+                                  {order.profile?.full_name || order.profile?.email || 'Sin nombre'}
+                                </p>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell">
+                              <div>
+                                <p className="font-medium text-sm">{order.profile?.full_name || 'Sin nombre'}</p>
+                                <p className="text-xs text-muted-foreground">{order.profile?.email}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell text-sm">
+                              {order.telefono || <span className="text-muted-foreground">-</span>}
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell text-sm">
+                              {order.created_at && format(new Date(order.created_at), 'dd MMM yyyy HH:mm', { locale: es })}
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              S/ {order.total_amount.toFixed(2)}
+                            </TableCell>
+                            <TableCell>{getStatusBadge(order.status)}</TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => openOrderDetail(order)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="comunidad">
+            <AdminCommunity />
+          </TabsContent>
+        </Tabs>
 
         {/* Order Detail Sheet */}
         <Sheet open={detailOpen} onOpenChange={setDetailOpen}>
