@@ -183,7 +183,7 @@ export default function MyAvatar() {
   
   // Assistant cart state
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [lastDeliveryInfo, setLastDeliveryInfo] = useState<{ address: string; district: string } | null>(null);
+  const [lastDeliveryInfo, setLastDeliveryInfo] = useState<{ address: string; district: string; telefono: string } | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -222,7 +222,7 @@ export default function MyAvatar() {
     try {
       const { data, error } = await supabase
         .from('orders')
-        .select('delivery_address, district')
+        .select('delivery_address, district, telefono')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -232,6 +232,7 @@ export default function MyAvatar() {
         setLastDeliveryInfo({
           address: data.delivery_address,
           district: data.district || '',
+          telefono: data.telefono || '',
         });
       }
     } catch (error) {
