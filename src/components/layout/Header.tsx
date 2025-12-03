@@ -26,6 +26,9 @@ export function Header() {
   const navLinks = [{
     href: '/marketplace',
     label: 'Marketplace'
+  }, {
+    href: '/comunidad',
+    label: 'Comunidad'
   }, ...(user ? [{
     href: '/mi-avatar',
     label: 'Mi Avatar'

@@ -17,6 +17,8 @@ import MyAvatar from "./pages/MyAvatar";
 import MyProfile from "./pages/MyProfile";
 import Vendor from "./pages/Vendor";
 import Admin from "./pages/Admin";
+import Comunidad from "./pages/Comunidad";
+import ComunidadDetail from "./pages/ComunidadDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +44,8 @@ const App = () => (
               <Route path="/mi-perfil" element={<MyProfile />} />
               <Route path="/vendor" element={<Vendor />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/comunidad" element={<Comunidad />} />
+              <Route path="/comunidad/:id" element={<ComunidadDetail />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
