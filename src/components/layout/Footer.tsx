@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { Logo } from '@/components/Logo';
 
 export function Footer() {
-  return <footer className="border-t border-border bg-muted/30">
+  return (
+    <footer className="border-t border-border bg-muted/30">
       <div className="container py-12">
         <div className="grid gap-8 md:grid-cols-4">
           {/* Brand */}
@@ -16,24 +17,19 @@ export function Footer() {
             <h4 className="mb-4 font-semibold text-foreground">Explorar</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
-                <Link to="/marketplace" className="transition-colors hover:text-primary">
-                  Marketplace
+                <Link to="/comunidad" className="transition-colors hover:text-primary">
+                  Comunidad
                 </Link>
               </li>
               <li>
-                <Link to="/marketplace?category=alimento" className="transition-colors hover:text-primary">
-                  Alimentos
+                <Link to="/auth?mode=signup" className="transition-colors hover:text-primary">
+                  Crear cuenta
                 </Link>
               </li>
               <li>
-                <Link to="/marketplace?category=juguetes" className="transition-colors hover:text-primary">
-                  Juguetes
-                </Link>
-              </li>
-              <li>
-                <Link to="/marketplace?category=arena-para-gato" className="transition-colors hover:text-primary">
-                  Arena para gato
-                </Link>
+                <span className="text-muted-foreground/60">
+                  Marketplace (Próximamente)
+                </span>
               </li>
             </ul>
           </div>
@@ -66,11 +62,11 @@ export function Footer() {
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-primary" />
-                <span>hola@kusipet.com</span>
+                <span>comunidad@kusipet.com</span>
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-primary" />
-                <span>+51 990 613 960</span>
+                <span>+51 997 227 638</span>
               </li>
             </ul>
           </div>
@@ -86,5 +82,6 @@ export function Footer() {
           </p>
         </div>
       </div>
-    </footer>;
+    </footer>
+  );
 }

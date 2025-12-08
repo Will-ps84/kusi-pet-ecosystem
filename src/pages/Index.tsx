@@ -1,65 +1,90 @@
 import { Link } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
+import { CommunitySignupForm } from '@/components/CommunitySignupForm';
 import { 
   PawPrint, 
-  Clock, 
-  Bell, 
-  CheckCircle, 
-  ArrowRight,
   Sparkles,
   Heart,
-  ShoppingBag
+  Users,
+  Search,
+  Home,
+  HandHeart,
+  Brain,
+  MessageCircle,
+  ArrowRight
 } from 'lucide-react';
 
 const steps = [
   {
     number: '01',
-    title: 'Registras a tu mascota',
-    description: 'Crea un perfil con toda la información importante de tu compañero.',
+    title: 'Crea el perfil de tu mascota',
+    description: 'Registra a tu perro o gato con su edad, peso, estilo de vida y necesidades de salud. Así el ecosistema comienza a conocerl@.',
     icon: PawPrint,
   },
   {
     number: '02',
-    title: 'Personalizas su avatar digital',
-    description: 'Tu mascota cobra vida en un avatar inteligente que te acompaña.',
-    icon: Sparkles,
+    title: 'Conéctate con la comunidad',
+    description: 'Recibe contenido de valor, historias reales, casos de adopción y avisos de mascotas perdidas en Lima para apoyar entre todos.',
+    icon: Users,
   },
   {
     number: '03',
-    title: 'Recibes recomendaciones',
-    description: 'Haces pedidos y sigues tus entregas de forma fácil.',
-    icon: Heart,
+    title: 'Recibe recomendaciones inteligentes',
+    description: 'Muy pronto nuestra IA te ayudará a tomar mejores decisiones de cuidado (alimentación, salud, servicios) según el perfil de tu mascota y el clima de Lima.',
+    icon: Sparkles,
   },
 ];
 
 const benefits = [
   {
-    icon: Clock,
-    title: 'Ahorro de tiempo',
-    description: 'Compra todo lo que tu mascota necesita en un solo lugar.',
+    icon: Brain,
+    title: 'IA que piensa en tu mascota',
+    description: 'Estamos construyendo un ecosistema que usará inteligencia artificial para ayudarte a tomar mejores decisiones de cuidado en el día a día.',
   },
   {
-    icon: Bell,
-    title: 'Recordatorios importantes',
-    description: 'Vacunas, cumpleaños, momento de recompra. Nunca olvidas nada.',
+    icon: MessageCircle,
+    title: 'Comunidad pet-parent en Lima',
+    description: 'Historias reales, dudas, experiencias y aprendizajes de personas que viven lo mismo que tú con sus perrhijos y gathijos.',
   },
   {
-    icon: CheckCircle,
-    title: 'Productos de calidad',
-    description: 'Seleccionamos los mejores productos para el bienestar de tu mascota.',
+    icon: Search,
+    title: 'Mascotas perdidas y adopciones',
+    description: 'Daremos visibilidad a casos de mascotas perdidas y promoveremos adopciones responsables junto a refugios y albergues.',
+  },
+  {
+    icon: HandHeart,
+    title: 'Apoyo a albergues',
+    description: 'Desde el día uno Kusi Pet nace con propósito: conectar a la comunidad con albergues y rescatistas para que más mascotas tengan un hogar.',
   },
 ];
 
-const categories = [
-  { name: 'Alimento', emoji: '🍖', slug: 'alimento' },
-  { name: 'Juguetes', emoji: '🎾', slug: 'juguetes' },
-  { name: 'Snacks y premios', emoji: '🦴', slug: 'snacks' },
-  { name: 'Artículos de cuidado', emoji: '🛁', slug: 'articulos-de-cuidado' },
-  { name: 'Arena para gato', emoji: '🐱', slug: 'arena-para-gato' },
+const communityPurpose = [
+  {
+    icon: Search,
+    title: 'Mascotas perdidas',
+    description: 'Publicaremos y ayudaremos a difundir casos de mascotas perdidas en Lima para que vuelvan a casa.',
+    emoji: '🔍',
+  },
+  {
+    icon: Heart,
+    title: 'Adopciones responsables',
+    description: 'Daremos visibilidad a mascotas en busca de familia y compartiremos tips para adoptar de forma responsable.',
+    emoji: '❤️',
+  },
+  {
+    icon: Home,
+    title: 'Albergues aliados',
+    description: 'Estamos construyendo una red de albergues y refugios para apoyar con visibilidad, donaciones y campañas conjuntas.',
+    emoji: '🏠',
+  },
 ];
 
 export default function Index() {
+  const scrollToForm = () => {
+    document.getElementById('signup-form')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <Layout>
       {/* Hero Section */}
@@ -82,27 +107,27 @@ export default function Index() {
             </h1>
             
             <p className="mb-8 text-lg text-muted-foreground md:text-xl">
-              Descubre productos seleccionados, crea un avatar digital único para tu mascota 
-              y recibe recomendaciones personalizadas.
+              Únete a la comunidad Kusi Pet y recibe tips de bienestar, apoyo en casos de mascotas perdidas y acceso anticipado a nuestro ecosistema pet-tech.
             </p>
             
-            <div className="flex flex-col justify-center gap-4 sm:flex-row">
-              <Link to="/marketplace">
-                <Button variant="hero" size="xl" className="w-full sm:w-auto">
-                  <ShoppingBag className="h-5 w-5" />
-                  Explorar productos
-                </Button>
-              </Link>
-              <Link to="/auth?mode=signup">
-                <Button variant="hero-outline" size="xl" className="w-full sm:w-auto">
-                  Crear cuenta gratis
-                  <ArrowRight className="h-5 w-5" />
-                </Button>
-              </Link>
+            <div className="flex flex-col items-center gap-4">
+              <Button 
+                variant="hero" 
+                size="xl" 
+                className="w-full sm:w-auto"
+                onClick={scrollToForm}
+              >
+                <Heart className="h-5 w-5" />
+                Quiero ser parte de la comunidad
+              </Button>
+              
+              <p className="max-w-md text-sm text-muted-foreground">
+                Primeras 500 familias: acceso anticipado + contenido exclusivo + beneficios especiales cuando lancemos el marketplace.
+              </p>
             </div>
           </div>
           
-          {/* Hero illustration placeholder */}
+          {/* Hero illustration */}
           <div className="mt-12 flex justify-center md:mt-16">
             <div className="relative">
               <div className="flex h-48 w-48 items-center justify-center rounded-full bg-gradient-avatar shadow-lg md:h-64 md:w-64">
@@ -110,6 +135,26 @@ export default function Index() {
               </div>
               <div className="absolute -right-8 top-0 animate-float text-4xl md:text-5xl">🐕</div>
               <div className="absolute -left-4 bottom-4 animate-float text-3xl delay-500 md:text-4xl" style={{ animationDelay: '0.5s' }}>❤️</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Signup Form Section */}
+      <section id="signup-form" className="bg-muted/30 py-16 md:py-24">
+        <div className="container">
+          <div className="mx-auto max-w-2xl">
+            <div className="mb-8 text-center">
+              <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
+                Únete a la comunidad Kusi Pet
+              </h2>
+              <p className="text-muted-foreground">
+                Déjanos tus datos para recibir tips, historias, alertas de mascotas perdidas y ser de los primeros en probar el ecosistema.
+              </p>
+            </div>
+            
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm md:p-8">
+              <CommunitySignupForm />
             </div>
           </div>
         </div>
@@ -123,7 +168,7 @@ export default function Index() {
               ¿Cómo funciona?
             </h2>
             <p className="mx-auto max-w-2xl text-muted-foreground">
-              En 3 simples pasos tendrás un ecosistema completo para el cuidado de tu mascota.
+              En 3 simples pasos serás parte de nuestro ecosistema de cuidado para mascotas.
             </p>
           </div>
           
@@ -157,15 +202,15 @@ export default function Index() {
         <div className="container">
           <div className="mb-12 text-center">
             <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
-              Beneficios
+              ¿Por qué Kusi Pet?
             </h2>
             <p className="mx-auto max-w-2xl text-muted-foreground">
-              Todo lo que necesitas para el cuidado de tu mascota en una sola plataforma.
+              Una comunidad con propósito para el bienestar de tu mascota.
             </p>
           </div>
           
-          <div className="grid gap-6 md:grid-cols-3">
-            {benefits.map((benefit, index) => (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {benefits.map((benefit) => (
               <div
                 key={benefit.title}
                 className="flex flex-col items-center rounded-2xl bg-card p-8 text-center shadow-sm transition-all duration-300 hover:shadow-md"
@@ -176,49 +221,35 @@ export default function Index() {
                 <h3 className="mb-2 text-xl font-semibold text-foreground">
                   {benefit.title}
                 </h3>
-                <p className="text-muted-foreground">{benefit.description}</p>
+                <p className="text-sm text-muted-foreground">{benefit.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Categories */}
+      {/* Community Purpose Section */}
       <section className="py-16 md:py-24">
         <div className="container">
           <div className="mb-12 text-center">
             <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
-              Categorías destacadas
+              Más que un marketplace: una comunidad con propósito
             </h2>
-            <p className="mx-auto max-w-2xl text-muted-foreground">
-              Encuentra todo lo que tu mascota necesita organizado por categorías.
-            </p>
           </div>
           
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-5 md:gap-6">
-            {categories.map((category) => (
-              <Link
-                key={category.slug}
-                to={`/marketplace?category=${category.slug}`}
-                className="group flex flex-col items-center rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:border-primary hover:shadow-lg"
+          <div className="grid gap-8 md:grid-cols-3">
+            {communityPurpose.map((item) => (
+              <div
+                key={item.title}
+                className="group relative overflow-hidden rounded-2xl border border-border bg-card p-8 text-center transition-all duration-300 hover:border-primary/50 hover:shadow-lg"
               >
-                <span className="mb-3 text-4xl transition-transform group-hover:scale-110">
-                  {category.emoji}
-                </span>
-                <span className="text-center font-medium text-foreground">
-                  {category.name}
-                </span>
-              </Link>
+                <div className="mb-4 text-5xl">{item.emoji}</div>
+                <h3 className="mb-3 text-xl font-semibold text-foreground">
+                  {item.title}
+                </h3>
+                <p className="text-muted-foreground">{item.description}</p>
+              </div>
             ))}
-          </div>
-          
-          <div className="mt-8 text-center">
-            <Link to="/marketplace">
-              <Button variant="outline" size="lg">
-                Ver todos los productos
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
           </div>
         </div>
       </section>
@@ -227,18 +258,19 @@ export default function Index() {
       <section className="bg-gradient-hero py-16 md:py-24">
         <div className="container text-center">
           <h2 className="mb-4 text-3xl font-bold text-primary-foreground md:text-4xl">
-            ¿Listo para comenzar?
+            ¿Listo para unirte a la comunidad Kusi Pet?
           </h2>
           <p className="mx-auto mb-8 max-w-2xl text-primary-foreground/90">
-            Únete a Kusi Pet y descubre una nueva forma de cuidar a tu mascota.
-            Regístrate gratis y comienza hoy.
+            Regístrate gratis y empieza a recibir contenido útil, historias reales y alertas importantes para el bienestar de tu mascota. Muy pronto tendrás acceso anticipado a nuestro marketplace y app pet-tech.
           </p>
-          <Link to="/auth?mode=signup">
-            <Button variant="coral" size="xl">
-              Crear cuenta gratis
-              <ArrowRight className="h-5 w-5" />
-            </Button>
-          </Link>
+          <Button 
+            variant="coral" 
+            size="xl"
+            onClick={scrollToForm}
+          >
+            Unirme a la comunidad
+            <ArrowRight className="h-5 w-5" />
+          </Button>
         </div>
       </section>
     </Layout>
