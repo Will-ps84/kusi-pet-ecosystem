@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Heart, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CommunitySignupFormProps {
   variant?: 'default' | 'compact';
@@ -35,13 +36,20 @@ export function CommunitySignupForm({ variant = 'default' }: CommunitySignupForm
     setIsSubmitting(true);
 
     try {
-      // For now, we'll show success - in production this would connect to Mailchimp API
-      // The user can embed Mailchimp form or add API integration later
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      const { data, error } = await supabase.functions.invoke('mailchimp-subscribe', {
+        body: { name: name.trim(), email: email.trim(), petType },
+      });
+
+      if (error) {
+        console.error('Error subscribing to Mailchimp:', error);
+        toast.error('Hubo un error. Por favor intenta de nuevo.');
+        return;
+      }
+
       setIsSuccess(true);
       toast.success('¡Bienvenido a la comunidad Kusi Pet!');
     } catch (error) {
+      console.error('Error subscribing to Mailchimp:', error);
       toast.error('Hubo un error. Por favor intenta de nuevo.');
     } finally {
       setIsSubmitting(false);
