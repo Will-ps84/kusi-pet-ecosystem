@@ -79,32 +79,11 @@ serve(async (req: Request): Promise<Response> => {
     if (!response.ok) {
       // Check if it's a "member exists" error
       if (responseData.title === "Member Exists") {
-        console.log("Member already exists, updating...");
-        
-        // Update existing member using PATCH
-        const updateUrl = `${mailchimpUrl}/${responseData.detail.split(" ")[0]}`;
-        const updateResponse = await fetch(mailchimpUrl.replace("/members", `/members/${email.toLowerCase()}`), {
-          method: "PATCH",
-          headers: {
-            "Authorization": `apikey ${apiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            merge_fields: {
-              FNAME: name,
-              PETTYPE: petType,
-            },
-            tags: ["kusi-pet-community", `pet-${petType}`],
-          }),
-        });
-
-        if (updateResponse.ok) {
-          console.log("Member updated successfully");
-          return new Response(
-            JSON.stringify({ success: true, message: "Member updated" }),
-            { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-          );
-        }
+        console.log("Member already exists, returning success");
+        return new Response(
+          JSON.stringify({ success: true, message: "Member already subscribed" }),
+          { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
       }
 
       console.error("Mailchimp API error:", responseData);
