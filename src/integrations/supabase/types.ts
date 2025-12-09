@@ -369,6 +369,13 @@ export type Database = {
             foreignKeyName: "products_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
+            referencedRelation: "public_vendors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
             referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
@@ -519,7 +526,24 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_vendors: {
+        Row: {
+          business_name: string | null
+          id: string | null
+          is_active: boolean | null
+        }
+        Insert: {
+          business_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+        }
+        Update: {
+          business_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
