@@ -95,19 +95,19 @@ export default function Index() {
         
         <div className="container relative">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
               <PawPrint className="h-4 w-4" />
               <span>El futuro del cuidado de mascotas en Perú</span>
             </div>
             
-            <h1 className="mb-6 text-4xl font-bold leading-tight tracking-tight text-foreground md:text-5xl lg:text-6xl">
+            <h1 className="mb-4 text-4xl font-bold leading-tight tracking-tight text-foreground md:mb-6 md:text-5xl lg:text-6xl">
               El ecosistema inteligente para el{' '}
               <span className="text-gradient-primary">bienestar total</span>{' '}
               de tu mascota
             </h1>
             
-            <p className="mb-8 text-lg text-muted-foreground md:text-xl">
-              Únete a la comunidad Kusi Pet y recibe tips de bienestar, apoyo en casos de mascotas perdidas y acceso anticipado a nuestro ecosistema pet-tech.
+            <p className="mx-auto mb-8 max-w-2xl text-base leading-relaxed text-muted-foreground md:text-xl">
+              Únete a la comunidad Kusi Pet y recibe tips de bienestar, apoyo en casos de mascotas perdidas y acceso anticipado a nuestro ecosistema pet‑tech.
             </p>
             
             <div className="flex flex-col items-center gap-4">
@@ -172,15 +172,15 @@ export default function Index() {
             </p>
           </div>
           
-          <div className="grid gap-8 md:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-3 md:gap-8">
             {steps.map((step, index) => (
               <div
                 key={step.number}
-                className="group relative rounded-2xl border border-border bg-card p-8 transition-all duration-300 hover:border-primary/50 hover:shadow-lg"
+                className="group relative rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:border-primary/50 hover:shadow-lg md:p-8"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="mb-4 flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                     <step.icon className="h-6 w-6" />
                   </div>
                   <span className="text-4xl font-bold text-muted-foreground/30">
@@ -213,9 +213,9 @@ export default function Index() {
             {benefits.map((benefit) => (
               <div
                 key={benefit.title}
-                className="flex flex-col items-center rounded-2xl bg-card p-8 text-center shadow-sm transition-all duration-300 hover:shadow-md"
+                className="flex flex-col items-center rounded-2xl bg-card p-6 text-center shadow-sm transition-all duration-300 hover:shadow-md md:p-8"
               >
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-hero text-primary-foreground">
+                <div className="mb-4 flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-hero text-primary-foreground">
                   <benefit.icon className="h-8 w-8" />
                 </div>
                 <h3 className="mb-2 text-xl font-semibold text-foreground">
@@ -237,13 +237,15 @@ export default function Index() {
             </h2>
           </div>
           
-          <div className="grid gap-8 md:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-3 md:gap-8">
             {communityPurpose.map((item) => (
               <div
                 key={item.title}
-                className="group relative overflow-hidden rounded-2xl border border-border bg-card p-8 text-center transition-all duration-300 hover:border-primary/50 hover:shadow-lg"
+                className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 text-center transition-all duration-300 hover:border-primary/50 hover:shadow-lg md:p-8"
               >
-                <div className="mb-4 text-5xl">{item.emoji}</div>
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center text-5xl">
+                  {item.emoji}
+                </div>
                 <h3 className="mb-3 text-xl font-semibold text-foreground">
                   {item.title}
                 </h3>

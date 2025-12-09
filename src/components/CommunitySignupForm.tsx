@@ -73,8 +73,8 @@ export function CommunitySignupForm({ variant = 'default' }: CommunitySignupForm
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-5">
         <div className="space-y-2">
           <Label htmlFor="name">Nombre</Label>
           <Input
@@ -98,20 +98,19 @@ export function CommunitySignupForm({ variant = 'default' }: CommunitySignupForm
             maxLength={255}
           />
         </div>
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="petType">Tipo de mascota</Label>
-        <Select value={petType} onValueChange={setPetType} required>
-          <SelectTrigger>
-            <SelectValue placeholder="Selecciona..." />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="perro">🐕 Perro</SelectItem>
-            <SelectItem value="gato">🐱 Gato</SelectItem>
-            <SelectItem value="ambos">🐕🐱 Ambos</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="space-y-2">
+          <Label htmlFor="petType">Tipo de mascota</Label>
+          <Select value={petType} onValueChange={setPetType} required>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecciona: Perro, Gato o Ambos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="perro">🐕 Perro</SelectItem>
+              <SelectItem value="gato">🐱 Gato</SelectItem>
+              <SelectItem value="ambos">🐕🐱 Ambos</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <Button 
