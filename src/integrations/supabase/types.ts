@@ -546,6 +546,14 @@ export type Database = {
       }
     }
     Functions: {
+      get_public_vendors: {
+        Args: never
+        Returns: {
+          business_name: string
+          id: string
+          is_active: boolean
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
