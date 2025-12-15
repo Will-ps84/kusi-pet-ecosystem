@@ -129,6 +129,7 @@ export default function ComunidadDetail() {
             <img
               src={post.image_url}
               alt={post.title}
+              loading="lazy"
               className="w-full h-[300px] md:h-[400px] object-cover"
             />
           ) : (

@@ -84,6 +84,7 @@ export function ProductImageGallery({ productId, fallbackImage, productName }: P
         <img
           src={currentImage.image_url}
           alt={`${productName} - Imagen ${currentIndex + 1}`}
+          loading="lazy"
           className="aspect-square w-full object-cover"
           onError={(e) => {
             (e.target as HTMLImageElement).src = '/placeholder.svg';

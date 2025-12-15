@@ -17,7 +17,7 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         // Custom Kusi Pet variants
         accent: "bg-accent text-accent-foreground hover:bg-accent/90 shadow-[0_4px_16px_hsl(24_95%_53%/0.25)] hover:shadow-lg",
-        hero: "bg-[linear-gradient(135deg,hsl(168_76%_36%)_0%,hsl(180_60%_45%)_100%)] text-primary-foreground shadow-[0_0_20px_hsl(168_76%_36%/0.3)] hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]",
+        hero: "bg-[linear-gradient(135deg,hsl(168_76%_36%)_0%,hsl(180_60%_45%)_100%)] text-white font-semibold shadow-[0_0_20px_hsl(168_76%_36%/0.3)] hover:shadow-[0_0_30px_hsl(168_76%_36%/0.5)] hover:scale-[1.03] hover:brightness-110 active:scale-[0.98] transition-all duration-200",
         "hero-outline": "border-2 border-primary bg-transparent text-primary hover:bg-primary hover:text-primary-foreground",
         teal: "bg-primary text-primary-foreground hover:bg-primary/80 shadow-sm hover:shadow-[0_0_20px_hsl(168_76%_36%/0.3)]",
         coral: "bg-accent text-accent-foreground shadow-[0_4px_16px_hsl(24_95%_53%/0.25)] hover:opacity-90 hover:shadow-lg",
