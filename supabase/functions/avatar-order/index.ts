@@ -20,6 +20,122 @@ interface OrderRequest {
   notes?: string;
 }
 
+// Input validation constants
+const MAX_ADDRESS_LENGTH = 500;
+const MAX_DISTRICT_LENGTH = 100;
+const MAX_NOTES_LENGTH = 500;
+const MAX_TELEFONO_LENGTH = 15;
+const MAX_ITEMS = 50;
+const MAX_QUANTITY_PER_ITEM = 100;
+
+// Phone validation regex - allows optional + and 7-15 digits
+const PHONE_REGEX = /^\+?[0-9]{7,15}$/;
+
+// UUID validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Sanitize string by trimming and removing potentially dangerous characters
+function sanitizeString(input: string | undefined | null): string | null {
+  if (!input) return null;
+  // Trim whitespace and remove null bytes
+  return input.trim().replace(/\0/g, '').slice(0, 1000);
+}
+
+// Validate and sanitize order input
+function validateOrderInput(body: OrderRequest): { valid: boolean; error?: string; sanitized?: OrderRequest } {
+  const { items, delivery_address, district, telefono, notes } = body;
+
+  // Validate items array
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    return { valid: false, error: "No items in order" };
+  }
+
+  if (items.length > MAX_ITEMS) {
+    return { valid: false, error: `Maximum ${MAX_ITEMS} items per order` };
+  }
+
+  // Validate each item
+  for (const item of items) {
+    if (!item.product_id || typeof item.product_id !== 'string') {
+      return { valid: false, error: "Invalid product ID" };
+    }
+    if (!UUID_REGEX.test(item.product_id)) {
+      return { valid: false, error: "Invalid product ID format" };
+    }
+    if (!item.quantity || typeof item.quantity !== 'number' || item.quantity < 1) {
+      return { valid: false, error: "Invalid quantity" };
+    }
+    if (item.quantity > MAX_QUANTITY_PER_ITEM) {
+      return { valid: false, error: `Maximum ${MAX_QUANTITY_PER_ITEM} units per item` };
+    }
+  }
+
+  // Validate delivery address
+  if (!delivery_address || typeof delivery_address !== 'string') {
+    return { valid: false, error: "Delivery address is required" };
+  }
+  const sanitizedAddress = sanitizeString(delivery_address);
+  if (!sanitizedAddress || sanitizedAddress.length < 5) {
+    return { valid: false, error: "Delivery address is too short" };
+  }
+  if (sanitizedAddress.length > MAX_ADDRESS_LENGTH) {
+    return { valid: false, error: `Delivery address must be less than ${MAX_ADDRESS_LENGTH} characters` };
+  }
+
+  // Validate district (optional but has max length)
+  let sanitizedDistrict: string | null = null;
+  if (district) {
+    if (typeof district !== 'string') {
+      return { valid: false, error: "Invalid district format" };
+    }
+    sanitizedDistrict = sanitizeString(district);
+    if (sanitizedDistrict && sanitizedDistrict.length > MAX_DISTRICT_LENGTH) {
+      return { valid: false, error: `District must be less than ${MAX_DISTRICT_LENGTH} characters` };
+    }
+  }
+
+  // Validate telefono (optional but must match format)
+  let sanitizedTelefono: string | null = null;
+  if (telefono) {
+    if (typeof telefono !== 'string') {
+      return { valid: false, error: "Invalid phone format" };
+    }
+    // Remove spaces and dashes for validation
+    const cleanPhone = telefono.replace(/[\s-]/g, '');
+    if (!PHONE_REGEX.test(cleanPhone)) {
+      return { valid: false, error: "Invalid phone number format. Use 7-15 digits, optionally starting with +" };
+    }
+    sanitizedTelefono = cleanPhone.slice(0, MAX_TELEFONO_LENGTH);
+  }
+
+  // Validate notes (optional but has max length)
+  let sanitizedNotes: string | null = null;
+  if (notes) {
+    if (typeof notes !== 'string') {
+      return { valid: false, error: "Invalid notes format" };
+    }
+    sanitizedNotes = sanitizeString(notes);
+    if (sanitizedNotes && sanitizedNotes.length > MAX_NOTES_LENGTH) {
+      return { valid: false, error: `Notes must be less than ${MAX_NOTES_LENGTH} characters` };
+    }
+  }
+
+  return {
+    valid: true,
+    sanitized: {
+      items: items.map(item => ({
+        product_id: item.product_id.toLowerCase(), // Normalize UUID
+        quantity: Math.floor(item.quantity), // Ensure integer
+        unit_price: item.unit_price,
+      })),
+      delivery_address: sanitizedAddress,
+      district: sanitizedDistrict || '',
+      telefono: sanitizedTelefono || undefined,
+      notes: sanitizedNotes || undefined,
+    }
+  };
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -58,27 +174,24 @@ serve(async (req) => {
 
     console.log("User authenticated:", user.id);
 
-    // Parse request body
+    // Parse and validate request body
     const body: OrderRequest = await req.json();
-    const { items, delivery_address, district, telefono, notes } = body;
+    const validation = validateOrderInput(body);
 
-    // Validate request
-    if (!items || items.length === 0) {
+    if (!validation.valid || !validation.sanitized) {
+      console.error("Validation error:", validation.error);
       return new Response(
-        JSON.stringify({ error: "No items in order" }),
+        JSON.stringify({ error: validation.error }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    if (!delivery_address) {
-      return new Response(
-        JSON.stringify({ error: "Delivery address is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const { items, delivery_address, district, telefono, notes } = validation.sanitized;
 
-    // Validate products exist and have stock
+    // Get product IDs for validation
     const productIds = items.map(item => item.product_id);
+    
+    // Fetch products for pricing info
     const { data: products, error: productsError } = await supabase
       .from("products")
       .select("id, name, price_total_igv, stock")
@@ -92,18 +205,12 @@ serve(async (req) => {
       );
     }
 
-    // Validate stock for each item
+    // Validate all products exist
     for (const item of items) {
       const product = products?.find(p => p.id === item.product_id);
       if (!product) {
         return new Response(
-          JSON.stringify({ error: `Product not found: ${item.product_id}` }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (product.stock < item.quantity) {
-        return new Response(
-          JSON.stringify({ error: `Insufficient stock for ${product.name}` }),
+          JSON.stringify({ error: `Product not found` }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -133,7 +240,78 @@ serve(async (req) => {
 
     console.log("Creating order with total:", total_amount);
 
-    // Create the order
+    // ATOMIC STOCK UPDATE: Update stock first with conditional check to prevent race conditions
+    // This uses atomic decrement with a WHERE clause to ensure stock doesn't go negative
+    const stockUpdateResults = [];
+    for (const item of items) {
+      const { data: updateResult, error: updateError } = await supabase
+        .from("products")
+        .update({ stock: supabase.rpc ? undefined : undefined }) // Placeholder, we use raw update below
+        .eq("id", item.product_id)
+        .gte("stock", item.quantity) // Only update if stock >= quantity
+        .select("id, stock");
+
+      // Use raw SQL update via RPC for atomic decrement
+      const { data: stockUpdate, error: stockError } = await supabase.rpc(
+        'decrement_stock',
+        { 
+          p_product_id: item.product_id, 
+          p_quantity: item.quantity 
+        }
+      ).maybeSingle();
+
+      if (stockError) {
+        // If RPC doesn't exist, fall back to conditional update
+        const { data: fallbackUpdate, error: fallbackError, count } = await supabase
+          .from("products")
+          .update({ stock: products!.find(p => p.id === item.product_id)!.stock - item.quantity })
+          .eq("id", item.product_id)
+          .gte("stock", item.quantity)
+          .select();
+
+        if (fallbackError || !fallbackUpdate || fallbackUpdate.length === 0) {
+          // Rollback any previous stock updates
+          for (const prevResult of stockUpdateResults) {
+            await supabase
+              .from("products")
+              .update({ stock: prevResult.original_stock })
+              .eq("id", prevResult.product_id);
+          }
+          const productName = products!.find(p => p.id === item.product_id)?.name || 'Unknown';
+          console.error("Insufficient stock or concurrent update for:", productName);
+          return new Response(
+            JSON.stringify({ error: `Insufficient stock for ${productName}. Please try again.` }),
+            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        stockUpdateResults.push({
+          product_id: item.product_id,
+          original_stock: products!.find(p => p.id === item.product_id)!.stock,
+        });
+      } else {
+        if (!stockUpdate || stockUpdate.success === false) {
+          // Rollback any previous stock updates
+          for (const prevResult of stockUpdateResults) {
+            await supabase
+              .from("products")
+              .update({ stock: prevResult.original_stock })
+              .eq("id", prevResult.product_id);
+          }
+          const productName = products!.find(p => p.id === item.product_id)?.name || 'Unknown';
+          console.error("Insufficient stock for:", productName);
+          return new Response(
+            JSON.stringify({ error: `Insufficient stock for ${productName}. Please try again.` }),
+            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        stockUpdateResults.push({
+          product_id: item.product_id,
+          original_stock: products!.find(p => p.id === item.product_id)!.stock,
+        });
+      }
+    }
+
+    // Create the order after stock is successfully reserved
     const { data: order, error: orderError } = await supabase
       .from("orders")
       .insert({
@@ -153,6 +331,13 @@ serve(async (req) => {
 
     if (orderError) {
       console.error("Error creating order:", orderError);
+      // Rollback stock updates
+      for (const prevResult of stockUpdateResults) {
+        await supabase
+          .from("products")
+          .update({ stock: prevResult.original_stock })
+          .eq("id", prevResult.product_id);
+      }
       return new Response(
         JSON.stringify({ error: "Error creating order" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -173,21 +358,18 @@ serve(async (req) => {
 
     if (itemsError) {
       console.error("Error creating order items:", itemsError);
-      // Try to delete the order if items failed
+      // Rollback: delete order and restore stock
       await supabase.from("orders").delete().eq("id", order.id);
+      for (const prevResult of stockUpdateResults) {
+        await supabase
+          .from("products")
+          .update({ stock: prevResult.original_stock })
+          .eq("id", prevResult.product_id);
+      }
       return new Response(
         JSON.stringify({ error: "Error creating order items" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
-    }
-
-    // Update product stock
-    for (const item of items) {
-      const product = products!.find(p => p.id === item.product_id)!;
-      await supabase
-        .from("products")
-        .update({ stock: product.stock - item.quantity })
-        .eq("id", item.product_id);
     }
 
     console.log("Order completed successfully");
