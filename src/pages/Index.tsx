@@ -142,18 +142,18 @@ export default function Index() {
 
       {/* Signup Form Section */}
       <section id="signup-form" className="bg-muted/30 py-16 md:py-24">
-        <div className="container">
+        <div className="container px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl">
-            <div className="mb-8 text-center">
-              <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
+            <div className="mb-8 text-center px-2">
+              <h2 className="mb-4 text-2xl font-bold text-foreground sm:text-3xl md:text-4xl">
                 Únete a la comunidad Kusi Pet
               </h2>
-              <p className="text-muted-foreground">
+              <p className="text-sm text-muted-foreground sm:text-base">
                 Déjanos tus datos para recibir tips, historias, alertas de mascotas perdidas y ser de los primeros en probar el ecosistema.
               </p>
             </div>
             
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm md:p-8">
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6 md:p-8">
               <CommunitySignupForm />
             </div>
           </div>

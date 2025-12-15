@@ -102,6 +102,7 @@ export default function Marketplace() {
                       <img
                         src={product.image_url}
                         alt={product.name}
+                        loading="lazy"
                         className="h-full w-full object-cover transition-transform group-hover:scale-105"
                       />
                     ) : (
@@ -192,6 +193,7 @@ export default function Marketplace() {
                         <img
                           src={product.image_url}
                           alt={product.name}
+                          loading="lazy"
                           className="h-full w-full object-cover transition-transform group-hover:scale-105"
                         />
                       ) : (

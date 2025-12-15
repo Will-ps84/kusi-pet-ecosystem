@@ -251,6 +251,7 @@ export function PetPhotos({ petId, petName }: PetPhotosProps) {
               <img
                 src={photo.image_url}
                 alt={`Foto de ${petName}`}
+                loading="lazy"
                 className="h-full w-full object-cover transition-transform group-hover:scale-105"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = '/placeholder.svg';
