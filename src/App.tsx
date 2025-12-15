@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
+import { RequireAdmin } from "@/components/auth/RequireAdmin";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Marketplace from "./pages/Marketplace";
@@ -34,11 +35,11 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/marketplace" element={<Marketplace />} />
-              <Route path="/producto/:id" element={<ProductDetail />} />
-              <Route path="/carrito" element={<Cart />} />
-              <Route path="/mis-pedidos" element={<MyOrders />} />
-              <Route path="/pedido/:id" element={<OrderDetail />} />
+              <Route path="/marketplace" element={<RequireAdmin><Marketplace /></RequireAdmin>} />
+              <Route path="/producto/:id" element={<RequireAdmin><ProductDetail /></RequireAdmin>} />
+              <Route path="/carrito" element={<RequireAdmin><Cart /></RequireAdmin>} />
+              <Route path="/mis-pedidos" element={<RequireAdmin><MyOrders /></RequireAdmin>} />
+              <Route path="/pedido/:id" element={<RequireAdmin><OrderDetail /></RequireAdmin>} />
               <Route path="/mis-mascotas" element={<MyPets />} />
               <Route path="/mi-avatar" element={<MyAvatar />} />
               <Route path="/mi-perfil" element={<MyProfile />} />
