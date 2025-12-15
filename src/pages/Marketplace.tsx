@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { Product, Category, SPECIES_TARGET_LABELS } from '@/lib/types';
 import { useCart } from '@/contexts/CartContext';
-import { Search, Filter, ShoppingCart, Star, ChevronRight } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Search, ShoppingCart, Plus, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Select,
@@ -15,6 +16,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { AdminProductForm } from '@/components/admin/AdminProductForm';
 
 export default function Marketplace() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -26,6 +38,14 @@ export default function Marketplace() {
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all');
   const [selectedSpecies, setSelectedSpecies] = useState(searchParams.get('species') || 'all');
   const { addToCart } = useCart();
+  const { hasRole } = useAuth();
+  const isAdmin = hasRole('admin');
+
+  // Admin state
+  const [productFormOpen, setProductFormOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -33,12 +53,18 @@ export default function Marketplace() {
 
   const fetchData = async () => {
     try {
+      // Admin sees all products, regular users only see active ones
+      const productsQuery = supabase
+        .from('products')
+        .select('*, category:categories(*)')
+        .order('created_at', { ascending: false });
+      
+      if (!isAdmin) {
+        productsQuery.eq('is_active', true);
+      }
+
       const [productsRes, categoriesRes, featuredRes] = await Promise.all([
-        supabase
-          .from('products')
-          .select('*, category:categories(*)')
-          .eq('is_active', true)
-          .order('created_at', { ascending: false }),
+        productsQuery,
         supabase.from('categories').select('*').order('name'),
         supabase
           .from('products')
@@ -57,6 +83,43 @@ export default function Marketplace() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleEditProduct = (product: Product, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setEditingProduct(product);
+    setProductFormOpen(true);
+  };
+
+  const handleDeleteClick = (product: Product, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setProductToDelete(product);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!productToDelete) return;
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productToDelete.id);
+      if (error) throw error;
+      toast.success('Producto eliminado');
+      fetchData();
+    } catch (error: any) {
+      toast.error(error.message || 'Error al eliminar el producto');
+    } finally {
+      setDeleteDialogOpen(false);
+      setProductToDelete(null);
+    }
+  };
+
+  const handleFormSuccess = () => {
+    setEditingProduct(null);
+    fetchData();
   };
 
   const filteredProducts = useMemo(() => {
@@ -123,6 +186,22 @@ export default function Marketplace() {
       {/* Main Content */}
       <section className="py-8">
         <div className="container">
+          {/* Admin Header */}
+          {isAdmin && (
+            <div className="mb-6 flex items-center justify-between rounded-lg bg-primary/10 p-4">
+              <div>
+                <h2 className="font-semibold text-foreground">Panel de Administración</h2>
+                <p className="text-sm text-muted-foreground">
+                  Gestiona productos, ve todos los estados (activos/inactivos)
+                </p>
+              </div>
+              <Button onClick={() => { setEditingProduct(null); setProductFormOpen(true); }}>
+                <Plus className="mr-2 h-4 w-4" />
+                Crear Producto
+              </Button>
+            </div>
+          )}
+
           {/* Filters */}
           <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center">
             <div className="relative flex-1">
@@ -185,8 +264,37 @@ export default function Marketplace() {
               {filteredProducts.map((product) => (
                 <div
                   key={product.id}
-                  className="group rounded-xl border border-border bg-card transition-all hover:border-primary/50 hover:shadow-md"
+                  className={`group relative rounded-xl border bg-card transition-all hover:border-primary/50 hover:shadow-md ${!product.is_active ? 'border-destructive/50 opacity-70' : 'border-border'}`}
                 >
+                  {/* Admin badge for inactive products */}
+                  {isAdmin && !product.is_active && (
+                    <div className="absolute left-2 top-2 z-10 rounded bg-destructive px-2 py-0.5 text-xs font-medium text-destructive-foreground">
+                      Inactivo
+                    </div>
+                  )}
+
+                  {/* Admin actions */}
+                  {isAdmin && (
+                    <div className="absolute right-2 top-2 z-10 flex gap-1">
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => handleEditProduct(product, e)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => handleDeleteClick(product, e)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+
                   <Link to={`/producto/${product.id}`}>
                     <div className="aspect-square overflow-hidden rounded-t-xl bg-muted">
                       {product.image_url ? (
@@ -209,13 +317,18 @@ export default function Marketplace() {
                       </p>
                     </Link>
                     
-                    <div className="mb-2 flex items-center gap-2">
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
                       <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                         {product.category?.name}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {SPECIES_TARGET_LABELS[product.species_target]}
                       </span>
+                      {isAdmin && (
+                        <span className="text-xs text-muted-foreground">
+                          Stock: {product.stock}
+                        </span>
+                      )}
                     </div>
                     
                     <div className="flex items-center justify-between">
@@ -248,6 +361,32 @@ export default function Marketplace() {
           )}
         </div>
       </section>
+
+      {/* Admin Product Form Dialog */}
+      <AdminProductForm
+        open={productFormOpen}
+        onOpenChange={setProductFormOpen}
+        product={editingProduct}
+        onSuccess={handleFormSuccess}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar producto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará permanentemente el producto "{productToDelete?.name}".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 }
