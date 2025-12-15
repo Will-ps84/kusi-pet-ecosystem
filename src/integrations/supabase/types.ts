@@ -546,6 +546,10 @@ export type Database = {
       }
     }
     Functions: {
+      decrement_stock: {
+        Args: { p_product_id: string; p_quantity: number }
+        Returns: Json
+      }
       get_public_vendors: {
         Args: never
         Returns: {
