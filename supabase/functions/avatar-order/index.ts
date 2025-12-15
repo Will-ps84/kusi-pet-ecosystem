@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,6 +18,18 @@ interface OrderRequest {
   district: string;
   telefono?: string;
   notes?: string;
+}
+
+interface StockUpdateResult {
+  product_id: string;
+  original_stock: number;
+}
+
+interface DecrementStockResult {
+  success: boolean;
+  error?: string;
+  new_stock?: number;
+  available?: number;
 }
 
 // Input validation constants
@@ -136,6 +148,16 @@ function validateOrderInput(body: OrderRequest): { valid: boolean; error?: strin
   };
 }
 
+// Helper function to rollback stock updates
+async function rollbackStockUpdates(supabase: SupabaseClient, stockUpdateResults: StockUpdateResult[]) {
+  for (const prevResult of stockUpdateResults) {
+    await supabase
+      .from("products")
+      .update({ stock: prevResult.original_stock })
+      .eq("id", prevResult.product_id);
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -210,7 +232,7 @@ serve(async (req) => {
       const product = products?.find(p => p.id === item.product_id);
       if (!product) {
         return new Response(
-          JSON.stringify({ error: `Product not found` }),
+          JSON.stringify({ error: "Product not found" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -240,75 +262,46 @@ serve(async (req) => {
 
     console.log("Creating order with total:", total_amount);
 
-    // ATOMIC STOCK UPDATE: Update stock first with conditional check to prevent race conditions
-    // This uses atomic decrement with a WHERE clause to ensure stock doesn't go negative
-    const stockUpdateResults = [];
+    // ATOMIC STOCK UPDATE: Use database function to atomically decrement stock
+    // This prevents race conditions by using row-level locking
+    const stockUpdateResults: StockUpdateResult[] = [];
+    
     for (const item of items) {
-      const { data: updateResult, error: updateError } = await supabase
-        .from("products")
-        .update({ stock: supabase.rpc ? undefined : undefined }) // Placeholder, we use raw update below
-        .eq("id", item.product_id)
-        .gte("stock", item.quantity) // Only update if stock >= quantity
-        .select("id, stock");
-
-      // Use raw SQL update via RPC for atomic decrement
-      const { data: stockUpdate, error: stockError } = await supabase.rpc(
-        'decrement_stock',
-        { 
+      const product = products!.find(p => p.id === item.product_id)!;
+      
+      // Try using the atomic decrement_stock function
+      const { data: stockResult, error: stockError } = await supabase
+        .rpc('decrement_stock', { 
           p_product_id: item.product_id, 
           p_quantity: item.quantity 
-        }
-      ).maybeSingle();
+        });
+
+      const result = stockResult as DecrementStockResult | null;
 
       if (stockError) {
-        // If RPC doesn't exist, fall back to conditional update
-        const { data: fallbackUpdate, error: fallbackError, count } = await supabase
-          .from("products")
-          .update({ stock: products!.find(p => p.id === item.product_id)!.stock - item.quantity })
-          .eq("id", item.product_id)
-          .gte("stock", item.quantity)
-          .select();
-
-        if (fallbackError || !fallbackUpdate || fallbackUpdate.length === 0) {
-          // Rollback any previous stock updates
-          for (const prevResult of stockUpdateResults) {
-            await supabase
-              .from("products")
-              .update({ stock: prevResult.original_stock })
-              .eq("id", prevResult.product_id);
-          }
-          const productName = products!.find(p => p.id === item.product_id)?.name || 'Unknown';
-          console.error("Insufficient stock or concurrent update for:", productName);
-          return new Response(
-            JSON.stringify({ error: `Insufficient stock for ${productName}. Please try again.` }),
-            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        stockUpdateResults.push({
-          product_id: item.product_id,
-          original_stock: products!.find(p => p.id === item.product_id)!.stock,
-        });
-      } else {
-        if (!stockUpdate || stockUpdate.success === false) {
-          // Rollback any previous stock updates
-          for (const prevResult of stockUpdateResults) {
-            await supabase
-              .from("products")
-              .update({ stock: prevResult.original_stock })
-              .eq("id", prevResult.product_id);
-          }
-          const productName = products!.find(p => p.id === item.product_id)?.name || 'Unknown';
-          console.error("Insufficient stock for:", productName);
-          return new Response(
-            JSON.stringify({ error: `Insufficient stock for ${productName}. Please try again.` }),
-            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        stockUpdateResults.push({
-          product_id: item.product_id,
-          original_stock: products!.find(p => p.id === item.product_id)!.stock,
-        });
+        console.error("Stock decrement error:", stockError);
+        // Rollback any previous stock updates
+        await rollbackStockUpdates(supabase, stockUpdateResults);
+        return new Response(
+          JSON.stringify({ error: `Error updating stock for ${product.name}` }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
+
+      if (!result || result.success === false) {
+        // Rollback any previous stock updates
+        await rollbackStockUpdates(supabase, stockUpdateResults);
+        console.error("Insufficient stock for:", product.name);
+        return new Response(
+          JSON.stringify({ error: `Insufficient stock for ${product.name}. Please try again.` }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      stockUpdateResults.push({
+        product_id: item.product_id,
+        original_stock: product.stock,
+      });
     }
 
     // Create the order after stock is successfully reserved
@@ -332,12 +325,7 @@ serve(async (req) => {
     if (orderError) {
       console.error("Error creating order:", orderError);
       // Rollback stock updates
-      for (const prevResult of stockUpdateResults) {
-        await supabase
-          .from("products")
-          .update({ stock: prevResult.original_stock })
-          .eq("id", prevResult.product_id);
-      }
+      await rollbackStockUpdates(supabase, stockUpdateResults);
       return new Response(
         JSON.stringify({ error: "Error creating order" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -360,12 +348,7 @@ serve(async (req) => {
       console.error("Error creating order items:", itemsError);
       // Rollback: delete order and restore stock
       await supabase.from("orders").delete().eq("id", order.id);
-      for (const prevResult of stockUpdateResults) {
-        await supabase
-          .from("products")
-          .update({ stock: prevResult.original_stock })
-          .eq("id", prevResult.product_id);
-      }
+      await rollbackStockUpdates(supabase, stockUpdateResults);
       return new Response(
         JSON.stringify({ error: "Error creating order items" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
