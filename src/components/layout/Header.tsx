@@ -21,6 +21,8 @@ export function Header() {
     navigate('/');
   };
 
+  const isAdmin = hasRole('admin');
+
   const navLinks = [
     {
       href: '/comunidad',
@@ -30,6 +32,16 @@ export function Header() {
       {
         href: '/mis-mascotas',
         label: 'Mis Mascotas'
+      }
+    ] : []),
+    ...(isAdmin ? [
+      {
+        href: '/marketplace',
+        label: 'Marketplace'
+      },
+      {
+        href: '/carrito',
+        label: 'Carrito'
       }
     ] : [])
   ];
