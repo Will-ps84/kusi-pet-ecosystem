@@ -1,4 +1,3 @@
-import { MessageCircle } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -7,7 +6,7 @@ import {
 } from '@/components/ui/tooltip';
 
 const WHATSAPP_NUMBER = '51997227638';
-const WHATSAPP_MESSAGE = 'Hola 👋, soy Kusi Pet. ¿En qué te ayudo con tu perrhijo o gathijo?';
+const WHATSAPP_MESSAGE = 'Hola, quiero saber más sobre Kusi Pet';
 
 export function WhatsAppFloatingButton() {
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
@@ -37,7 +36,8 @@ export function WhatsAppFloatingButton() {
           side="left" 
           className="max-w-[200px] bg-card text-foreground shadow-lg"
         >
-          <p className="text-sm">¿Tienes dudas? ¡Escríbenos por WhatsApp!</p>
+          <p className="text-sm font-medium">Habla con Kusi Pet</p>
+          <p className="text-xs text-muted-foreground">¿Dudas? ¡Escríbenos!</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
