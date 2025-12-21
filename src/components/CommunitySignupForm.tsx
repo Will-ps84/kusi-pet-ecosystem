@@ -76,10 +76,12 @@ export function CommunitySignupForm({ variant = 'default' }: CommunitySignupForm
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-5">
         <div className="space-y-2">
-          <Label htmlFor="name">Nombre</Label>
+          <Label htmlFor="name" className="text-sm font-medium">
+            Nombre
+          </Label>
           <Input
             id="name"
-            placeholder="Tu nombre"
+            placeholder="¿Cómo te llamas?"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
@@ -87,11 +89,13 @@ export function CommunitySignupForm({ variant = 'default' }: CommunitySignupForm
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="email">Correo electrónico</Label>
+          <Label htmlFor="email" className="text-sm font-medium">
+            Correo electrónico
+          </Label>
           <Input
             id="email"
             type="email"
-            placeholder="tu@email.com"
+            placeholder="tu-correo@ejemplo.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -99,10 +103,12 @@ export function CommunitySignupForm({ variant = 'default' }: CommunitySignupForm
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="petType">Tipo de mascota</Label>
+          <Label htmlFor="petType" className="text-sm font-medium">
+            Tipo de mascota
+          </Label>
           <Select value={petType} onValueChange={setPetType} required>
             <SelectTrigger>
-              <SelectValue placeholder="Selecciona: Perro, Gato o Ambos" />
+              <SelectValue placeholder="¿Tienes perro, gato o ambos?" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="perro">🐕 Perro</SelectItem>
@@ -125,10 +131,14 @@ export function CommunitySignupForm({ variant = 'default' }: CommunitySignupForm
         ) : (
           <>
             <Heart className="h-5 w-5" />
-            Quiero recibir contenidos y acceso anticipado
+            Quiero unirme a la comunidad Kusi Pet
           </>
         )}
       </Button>
+
+      <p className="text-center text-xs text-muted-foreground">
+        Usaremos tus datos solo para enviarte contenido de Kusi Pet. Puedes darte de baja cuando quieras.
+      </p>
     </form>
   );
 }

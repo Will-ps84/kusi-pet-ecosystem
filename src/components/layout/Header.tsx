@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useState } from 'react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Logo } from '@/components/Logo';
+import { Badge } from '@/components/ui/badge';
 
 export function Header() {
   const {
@@ -23,28 +24,36 @@ export function Header() {
 
   const isAdmin = hasRole('admin');
 
-  const navLinks = [
+  // Public navigation - Marketplace marked as "Próximamente"
+  const publicNavLinks = [
     {
       href: '/comunidad',
       label: 'Comunidad'
     },
-    ...(user ? [
-      {
-        href: '/mis-mascotas',
-        label: 'Mis Mascotas'
-      }
-    ] : []),
-    ...(isAdmin ? [
-      {
-        href: '/marketplace',
-        label: 'Marketplace'
-      },
-      {
-        href: '/carrito',
-        label: 'Carrito'
-      }
-    ] : [])
   ];
+
+  // User-specific navigation (only when logged in)
+  const userNavLinks = user ? [
+    {
+      href: '/mis-mascotas',
+      label: 'Mis Mascotas'
+    }
+  ] : [];
+
+  // Admin-only navigation (marketplace + carrito)
+  const adminNavLinks = isAdmin ? [
+    {
+      href: '/marketplace',
+      label: 'Marketplace'
+    },
+    {
+      href: '/carrito',
+      label: 'Carrito'
+    }
+  ] : [];
+
+  // Combine all nav links for display
+  const navLinks = [...publicNavLinks, ...userNavLinks, ...adminNavLinks];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -63,7 +72,19 @@ export function Header() {
               {link.label}
             </Link>
           ))}
-          {hasRole('admin') && (
+          
+          {/* Marketplace "Próximamente" badge for non-admin users */}
+          {!isAdmin && (
+            <span className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground/60 cursor-not-allowed">
+              Marketplace
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal">
+                Próximamente
+              </Badge>
+            </span>
+          )}
+
+          {/* Admin link - only visible to admins */}
+          {isAdmin && (
             <Link 
               to="/admin" 
               className="text-sm font-medium text-accent transition-colors hover:text-accent/80"
@@ -143,7 +164,19 @@ export function Header() {
                 {link.label}
               </Link>
             ))}
-            {hasRole('admin') && (
+            
+            {/* Marketplace "Próximamente" for non-admin users on mobile */}
+            {!isAdmin && (
+              <span className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground/60 cursor-not-allowed">
+                Marketplace
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal">
+                  Próximamente
+                </Badge>
+              </span>
+            )}
+
+            {/* Admin link - only visible to admins on mobile */}
+            {isAdmin && (
               <Link 
                 to="/admin" 
                 className="rounded-lg px-4 py-2 text-sm font-medium text-accent transition-colors hover:bg-muted" 
@@ -152,6 +185,7 @@ export function Header() {
                 Admin
               </Link>
             )}
+
             {!user && (
               <div className="flex gap-2 pt-2">
                 <Link to="/auth" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
