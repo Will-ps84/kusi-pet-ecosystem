@@ -12,7 +12,8 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ShoppingBag, DollarSign, Users, Package, Eye, RefreshCw, Heart } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Loader2, ShoppingBag, DollarSign, Users, Package, Eye, RefreshCw, Heart, Link as LinkIcon, Copy } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Database } from '@/integrations/supabase/types';
@@ -40,6 +41,8 @@ interface OrderWithProfile {
   telefono: string | null;
   notes: string | null;
   user_id: string;
+  tracking_token?: string;
+  delivery_window?: string | null;
   profile?: Profile | null;
 }
 
@@ -210,6 +213,9 @@ export default function Admin() {
   const updateOrderStatus = async (orderId: string, newStatus: OrderStatus) => {
     setUpdatingStatus(true);
     try {
+      // Find the order to get tracking token and customer info
+      const orderToUpdate = orders.find(o => o.id === orderId);
+      
       const { error } = await supabase
         .from('orders')
         .update({ status: newStatus })
@@ -217,7 +223,42 @@ export default function Admin() {
 
       if (error) throw error;
 
-      toast({ title: 'Estado actualizado', description: `Pedido actualizado a "${newStatus}"` });
+      // Send notification for specific status changes
+      const notifyStatuses = ['confirmado', 'en_ruta', 'entregado'];
+      if (notifyStatuses.includes(newStatus) && orderToUpdate?.tracking_token) {
+        try {
+          const { error: notifyError } = await supabase.functions.invoke('order-notifications', {
+            body: {
+              orderId: orderId,
+              newStatus: newStatus,
+              customerEmail: orderToUpdate.profile?.email || '',
+              customerName: orderToUpdate.profile?.full_name || '',
+              trackingToken: orderToUpdate.tracking_token,
+              deliveryWindow: orderToUpdate.delivery_window,
+              district: orderToUpdate.district,
+              totalAmount: orderToUpdate.total_amount,
+            },
+          });
+          
+          if (notifyError) {
+            console.error('Error sending notification:', notifyError);
+            toast({ 
+              title: 'Estado actualizado', 
+              description: `Pedido actualizado a "${newStatus}" (notificación no enviada)` 
+            });
+          } else {
+            toast({ 
+              title: 'Estado actualizado', 
+              description: `Pedido actualizado a "${newStatus}" y notificación enviada` 
+            });
+          }
+        } catch (notifyErr) {
+          console.error('Error invoking notification function:', notifyErr);
+          toast({ title: 'Estado actualizado', description: `Pedido actualizado a "${newStatus}"` });
+        }
+      } else {
+        toast({ title: 'Estado actualizado', description: `Pedido actualizado a "${newStatus}"` });
+      }
       
       // Update local state
       setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
@@ -484,6 +525,59 @@ export default function Admin() {
                       )}
                     </div>
                   </div>
+
+                  {/* Delivery Window */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Ventana de Entrega</label>
+                    <Input
+                      placeholder="Ej: 2pm - 5pm"
+                      value={selectedOrder.delivery_window || ''}
+                      onChange={async (e) => {
+                        const newWindow = e.target.value;
+                        setSelectedOrder(prev => prev ? { ...prev, delivery_window: newWindow } : null);
+                        // Debounced update to DB
+                        await supabase
+                          .from('orders')
+                          .update({ delivery_window: newWindow })
+                          .eq('id', selectedOrder.id);
+                        setOrders(prev => prev.map(o => 
+                          o.id === selectedOrder.id ? { ...o, delivery_window: newWindow } : o
+                        ));
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Se muestra al cliente cuando el pedido está "En ruta"
+                    </p>
+                  </div>
+
+                  {/* Tracking Link */}
+                  {selectedOrder.tracking_token && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <LinkIcon className="h-4 w-4" />
+                        Link de Seguimiento
+                      </label>
+                      <div className="flex gap-2">
+                        <Input
+                          readOnly
+                          value={`${window.location.origin}/tracking/${selectedOrder.tracking_token}`}
+                          className="text-xs"
+                        />
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            navigator.clipboard.writeText(
+                              `${window.location.origin}/tracking/${selectedOrder.tracking_token}`
+                            );
+                            toast({ title: 'Link copiado', description: 'Link de seguimiento copiado al portapapeles' });
+                          }}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
 
                   <Separator />
 

@@ -20,6 +20,7 @@ import Vendor from "./pages/Vendor";
 import Admin from "./pages/Admin";
 import Comunidad from "./pages/Comunidad";
 import ComunidadDetail from "./pages/ComunidadDetail";
+import Tracking from "./pages/Tracking";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +48,7 @@ const App = () => (
               <Route path="/admin" element={<Admin />} />
               <Route path="/comunidad" element={<Comunidad />} />
               <Route path="/comunidad/:id" element={<ComunidadDetail />} />
+              <Route path="/tracking/:token" element={<Tracking />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

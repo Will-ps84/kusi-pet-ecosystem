@@ -115,6 +115,7 @@ export type Database = {
           created_at: string | null
           delivery_address: string
           delivery_fee: number | null
+          delivery_window: string | null
           district: string | null
           id: string
           notes: string | null
@@ -123,12 +124,14 @@ export type Database = {
           telefono: string | null
           total_amount: number
           total_products_amount: number
+          tracking_token: string
           user_id: string
         }
         Insert: {
           created_at?: string | null
           delivery_address: string
           delivery_fee?: number | null
+          delivery_window?: string | null
           district?: string | null
           id?: string
           notes?: string | null
@@ -137,12 +140,14 @@ export type Database = {
           telefono?: string | null
           total_amount: number
           total_products_amount: number
+          tracking_token?: string
           user_id: string
         }
         Update: {
           created_at?: string | null
           delivery_address?: string
           delivery_fee?: number | null
+          delivery_window?: string | null
           district?: string | null
           id?: string
           notes?: string | null
@@ -151,6 +156,7 @@ export type Database = {
           telefono?: string | null
           total_amount?: number
           total_products_amount?: number
+          tracking_token?: string
           user_id?: string
         }
         Relationships: []
