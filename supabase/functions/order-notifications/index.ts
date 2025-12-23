@@ -58,7 +58,7 @@ const getStatusEmailContent = (
             </div>
             
             <p style="color: #9ca3af; font-size: 14px; text-align: center;">
-              ¿Tienes dudas? Escríbenos por WhatsApp al +51 999 999 999
+              ¿Tienes dudas? Escríbenos por WhatsApp al +51 997 227 638
             </p>
             
             <div style="border-top: 1px solid #e5e7eb; margin-top: 30px; padding-top: 20px; text-align: center;">
@@ -105,7 +105,7 @@ const getStatusEmailContent = (
             </div>
             
             <p style="color: #9ca3af; font-size: 14px; text-align: center;">
-              ¿Tienes dudas? Escríbenos por WhatsApp al +51 999 999 999
+              ¿Tienes dudas? Escríbenos por WhatsApp al +51 997 227 638
             </p>
             
             <div style="border-top: 1px solid #e5e7eb; margin-top: 30px; padding-top: 20px; text-align: center;">
@@ -143,7 +143,7 @@ const getStatusEmailContent = (
             </p>
             
             <div style="text-align: center; margin: 30px 0;">
-              <a href="https://wa.me/51999999999?text=Hola%20Kusi%20Pet!%20Quiero%20dejar%20un%20comentario%20sobre%20mi%20pedido" style="background-color: #25d366; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+              <a href="https://wa.me/51997227638?text=Hola%20Kusi%20Pet!%20Quiero%20dejar%20un%20comentario%20sobre%20mi%20pedido" style="background-color: #25d366; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
                 💬 Dejar comentario por WhatsApp
               </a>
             </div>

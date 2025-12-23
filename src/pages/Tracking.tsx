@@ -25,7 +25,7 @@ const ORDER_STEPS = [
   { key: 'entregado', label: 'Entregado', icon: MapPin, description: '¡Pedido entregado!' },
 ];
 
-const WHATSAPP_NUMBER = '51999999999'; // Actualizar con número real de Kusi Pet
+const WHATSAPP_NUMBER = '51997227638';
 
 export default function Tracking() {
   const { token } = useParams<{ token: string }>();
