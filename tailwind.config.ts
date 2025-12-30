@@ -72,7 +72,26 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        // Custom brand colors
+        // Custom brand colors from logo
+        "kusi-orange": {
+          DEFAULT: "hsl(var(--kusi-orange))",
+          light: "hsl(var(--kusi-orange-light))",
+          dark: "hsl(var(--kusi-orange-dark))",
+        },
+        "pet-blue": {
+          DEFAULT: "hsl(var(--pet-blue))",
+          light: "hsl(var(--pet-blue-light))",
+          dark: "hsl(var(--pet-blue-dark))",
+        },
+        "heart-green": {
+          DEFAULT: "hsl(var(--heart-green))",
+          light: "hsl(var(--heart-green-light))",
+        },
+        "heart-teal": {
+          DEFAULT: "hsl(var(--heart-teal))",
+          light: "hsl(var(--heart-teal-light))",
+        },
+        // Legacy aliases for compatibility
         teal: {
           DEFAULT: "hsl(var(--teal))",
           light: "hsl(var(--teal-light))",
@@ -88,6 +107,11 @@ export default {
         },
         cream: "hsl(var(--cream))",
         "warm-gray": "hsl(var(--warm-gray))",
+        // Status colors
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          foreground: "hsl(var(--info-foreground))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

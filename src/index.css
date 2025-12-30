@@ -9,30 +9,44 @@
 
 @layer base {
   :root {
-    /* Kusi Pet Brand Colors - Warm Teal & Coral */
-    --background: 40 33% 98%;
-    --foreground: 220 20% 15%;
+    /* 
+      Kusi Pet Brand Colors
+      =====================
+      Extracted from logo:
+      - Naranja "Kusi": #F7941D → HSL(32, 94%, 54%)
+      - Azul "Pet": #5B7C99 → HSL(208, 25%, 48%)
+      - Verde corazón: #8DC63F → HSL(88, 54%, 51%)
+      - Turquesa corazón: #00A79D → HSL(175, 100%, 33%)
+      
+      Color Usage:
+      - Primary: Naranja Kusi (botones principales, CTAs)
+      - Secondary: Azul Pet (acentos, texto secundario importante)
+      - Accent: Verde/Turquesa (badges, iconos, success states)
+    */
+    
+    --background: 210 20% 98%;
+    --foreground: 208 30% 20%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 15%;
+    --card-foreground: 208 30% 20%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 15%;
+    --popover-foreground: 208 30% 20%;
 
-    /* Primary - Warm Teal */
-    --primary: 168 76% 36%;
+    /* Primary - Naranja Kusi */
+    --primary: 32 94% 54%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Soft Lavender for tech/avatar */
-    --secondary: 270 40% 94%;
-    --secondary-foreground: 270 30% 30%;
+    /* Secondary - Azul Pet */
+    --secondary: 208 25% 48%;
+    --secondary-foreground: 0 0% 100%;
 
     /* Muted */
-    --muted: 40 20% 94%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 210 15% 94%;
+    --muted-foreground: 208 15% 45%;
 
-    /* Accent - Coral/Orange for CTAs */
-    --accent: 24 95% 53%;
+    /* Accent - Verde/Turquesa del corazón */
+    --accent: 175 100% 33%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
@@ -41,70 +55,93 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --success: 142 76% 36%;
+    --success: 88 54% 45%;
     --success-foreground: 0 0% 100%;
 
-    --border: 40 20% 88%;
-    --input: 40 20% 88%;
-    --ring: 168 76% 36%;
+    --info: 208 25% 48%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 210 15% 88%;
+    --input: 210 15% 88%;
+    --ring: 32 94% 54%;
 
     --radius: 0.75rem;
 
-    /* Custom colors */
-    --teal: 168 76% 36%;
-    --teal-light: 168 60% 90%;
-    --teal-dark: 168 80% 28%;
-    --coral: 24 95% 53%;
-    --coral-light: 24 100% 95%;
-    --lavender: 270 40% 94%;
-    --lavender-dark: 270 30% 60%;
-    --cream: 40 33% 98%;
-    --warm-gray: 40 10% 60%;
+    /* Custom brand colors */
+    --kusi-orange: 32 94% 54%;
+    --kusi-orange-light: 32 94% 92%;
+    --kusi-orange-dark: 32 94% 44%;
+    
+    --pet-blue: 208 25% 48%;
+    --pet-blue-light: 208 25% 90%;
+    --pet-blue-dark: 208 30% 35%;
+    
+    --heart-green: 88 54% 51%;
+    --heart-green-light: 88 54% 90%;
+    
+    --heart-teal: 175 100% 33%;
+    --heart-teal-light: 175 60% 90%;
+
+    /* Legacy color aliases for compatibility */
+    --teal: 175 100% 33%;
+    --teal-light: 175 60% 90%;
+    --teal-dark: 175 100% 25%;
+    --coral: 32 94% 54%;
+    --coral-light: 32 94% 92%;
+    --lavender: 208 25% 90%;
+    --lavender-dark: 208 25% 48%;
+    --cream: 210 20% 98%;
+    --warm-gray: 208 10% 55%;
 
     /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(168 76% 36%) 0%, hsl(180 60% 45%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(40 20% 98%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(24 95% 53%) 0%, hsl(35 95% 55%) 100%);
-    --gradient-avatar: linear-gradient(135deg, hsl(270 40% 94%) 0%, hsl(200 60% 94%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(32 94% 54%) 0%, hsl(38 95% 55%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(210 15% 98%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(88 54% 51%) 0%, hsl(175 100% 33%) 100%);
+    --gradient-heart: linear-gradient(135deg, hsl(88 54% 51%) 0%, hsl(175 100% 33%) 100%);
+    --gradient-avatar: linear-gradient(135deg, hsl(175 60% 90%) 0%, hsl(88 54% 90%) 100%);
 
     /* Shadows */
-    --shadow-sm: 0 1px 2px hsl(220 20% 15% / 0.05);
-    --shadow-md: 0 4px 12px hsl(220 20% 15% / 0.08);
-    --shadow-lg: 0 8px 24px hsl(220 20% 15% / 0.12);
-    --shadow-glow: 0 0 20px hsl(168 76% 36% / 0.3);
-    --shadow-coral: 0 4px 16px hsl(24 95% 53% / 0.25);
+    --shadow-sm: 0 1px 2px hsl(208 30% 20% / 0.05);
+    --shadow-md: 0 4px 12px hsl(208 30% 20% / 0.08);
+    --shadow-lg: 0 8px 24px hsl(208 30% 20% / 0.12);
+    --shadow-glow: 0 0 20px hsl(32 94% 54% / 0.3);
+    --shadow-coral: 0 4px 16px hsl(32 94% 54% / 0.25);
+    --shadow-teal: 0 4px 16px hsl(175 100% 33% / 0.25);
 
     /* Sidebar */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 20% 15%;
-    --sidebar-primary: 168 76% 36%;
+    --sidebar-foreground: 208 30% 20%;
+    --sidebar-primary: 32 94% 54%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 40 20% 96%;
-    --sidebar-accent-foreground: 220 20% 15%;
-    --sidebar-border: 40 20% 90%;
-    --sidebar-ring: 168 76% 36%;
+    --sidebar-accent: 210 15% 96%;
+    --sidebar-accent-foreground: 208 30% 20%;
+    --sidebar-border: 210 15% 90%;
+    --sidebar-ring: 32 94% 54%;
   }
 
   .dark {
-    --background: 220 20% 10%;
-    --foreground: 40 20% 96%;
+    --background: 208 30% 8%;
+    --foreground: 210 15% 95%;
 
-    --card: 220 20% 14%;
-    --card-foreground: 40 20% 96%;
+    --card: 208 25% 12%;
+    --card-foreground: 210 15% 95%;
 
-    --popover: 220 20% 14%;
-    --popover-foreground: 40 20% 96%;
+    --popover: 208 25% 12%;
+    --popover-foreground: 210 15% 95%;
 
-    --primary: 168 70% 45%;
-    --primary-foreground: 220 20% 10%;
+    /* Primary - Naranja Kusi */
+    --primary: 32 90% 55%;
+    --primary-foreground: 208 30% 8%;
 
-    --secondary: 270 30% 20%;
-    --secondary-foreground: 270 30% 80%;
+    /* Secondary - Azul Pet */
+    --secondary: 208 25% 55%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 15% 20%;
-    --muted-foreground: 220 10% 60%;
+    --muted: 208 20% 18%;
+    --muted-foreground: 210 10% 60%;
 
-    --accent: 24 90% 55%;
+    /* Accent - Verde/Turquesa */
+    --accent: 175 80% 40%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 70% 50%;
@@ -113,21 +150,24 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --success: 142 70% 40%;
+    --success: 88 50% 45%;
     --success-foreground: 0 0% 100%;
 
-    --border: 220 15% 22%;
-    --input: 220 15% 22%;
-    --ring: 168 70% 45%;
+    --info: 208 30% 55%;
+    --info-foreground: 0 0% 100%;
 
-    --sidebar-background: 220 20% 12%;
-    --sidebar-foreground: 40 20% 96%;
-    --sidebar-primary: 168 70% 45%;
-    --sidebar-primary-foreground: 220 20% 10%;
-    --sidebar-accent: 220 15% 18%;
-    --sidebar-accent-foreground: 40 20% 96%;
-    --sidebar-border: 220 15% 20%;
-    --sidebar-ring: 168 70% 45%;
+    --border: 208 20% 20%;
+    --input: 208 20% 20%;
+    --ring: 32 90% 55%;
+
+    --sidebar-background: 208 25% 10%;
+    --sidebar-foreground: 210 15% 95%;
+    --sidebar-primary: 32 90% 55%;
+    --sidebar-primary-foreground: 208 30% 8%;
+    --sidebar-accent: 208 20% 16%;
+    --sidebar-accent-foreground: 210 15% 95%;
+    --sidebar-border: 208 20% 18%;
+    --sidebar-ring: 32 90% 55%;
   }
 }
 
@@ -157,6 +197,11 @@
     background-image: var(--gradient-accent);
   }
 
+  .text-gradient-heart {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-heart);
+  }
+
   .bg-gradient-hero {
     background-image: var(--gradient-hero);
   }
@@ -169,6 +214,10 @@
     background-image: var(--gradient-accent);
   }
 
+  .bg-gradient-heart {
+    background-image: var(--gradient-heart);
+  }
+
   .bg-gradient-avatar {
     background-image: var(--gradient-avatar);
   }
@@ -179,6 +228,10 @@
 
   .shadow-coral {
     box-shadow: var(--shadow-coral);
+  }
+
+  .shadow-teal {
+    box-shadow: var(--shadow-teal);
   }
 
   .animate-float {

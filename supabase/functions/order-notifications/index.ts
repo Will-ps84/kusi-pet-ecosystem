@@ -20,6 +20,17 @@ interface NotificationRequest {
   totalAmount?: number;
 }
 
+// Brand colors from logo
+const BRAND_COLORS = {
+  kusiOrange: "#F7941D",
+  petBlue: "#5B7C99",
+  heartGreen: "#8DC63F",
+  heartTeal: "#00A79D",
+  darkText: "#1f2937",
+  mutedText: "#4b5563",
+  lightText: "#9ca3af",
+};
+
 const getStatusEmailContent = (
   status: string,
   customerName: string,
@@ -29,43 +40,56 @@ const getStatusEmailContent = (
 ) => {
   const name = customerName || "Cliente";
   
+  const headerHtml = `
+    <div style="text-align: center; margin-bottom: 30px;">
+      <h1 style="color: ${BRAND_COLORS.kusiOrange}; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; font-size: 28px;">
+        🐾 <span style="color: ${BRAND_COLORS.kusiOrange};">Kusi</span> <span style="color: ${BRAND_COLORS.petBlue};">Pet</span>
+      </h1>
+      <p style="color: ${BRAND_COLORS.heartTeal}; font-size: 12px; margin-top: 5px; font-style: italic;">
+        El ecosistema inteligente para el bienestar total de tu mascota
+      </p>
+    </div>
+  `;
+
+  const footerHtml = `
+    <p style="color: ${BRAND_COLORS.lightText}; font-size: 14px; text-align: center;">
+      ¿Tienes dudas? Escríbenos por WhatsApp al +51 997 227 638
+    </p>
+    
+    <div style="border-top: 1px solid #e5e7eb; margin-top: 30px; padding-top: 20px; text-align: center;">
+      <p style="color: ${BRAND_COLORS.lightText}; font-size: 12px;">
+        © 2024 Kusi Pet - Lima, Perú
+      </p>
+    </div>
+  `;
+  
   switch (status) {
     case "confirmado":
       return {
         subject: "🐾 ¡Tu pedido Kusi Pet está confirmado!",
         html: `
           <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #f97316; margin: 0;">🐾 Kusi Pet</h1>
-            </div>
+            ${headerHtml}
             
-            <h2 style="color: #1f2937;">¡Hola ${name}!</h2>
+            <h2 style="color: ${BRAND_COLORS.darkText};">¡Hola ${name}!</h2>
             
-            <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+            <p style="color: ${BRAND_COLORS.mutedText}; font-size: 16px; line-height: 1.6;">
               ¡Listo! <strong>Tu pedido Kusi Pet está confirmado</strong>. Estamos preparando todo con mucho cariño para ti y tu mascota.
             </p>
             
-            ${totalAmount ? `<p style="color: #4b5563; font-size: 16px;"><strong>Total del pedido:</strong> S/ ${totalAmount.toFixed(2)}</p>` : ""}
+            ${totalAmount ? `<p style="color: ${BRAND_COLORS.mutedText}; font-size: 16px;"><strong>Total del pedido:</strong> S/ ${totalAmount.toFixed(2)}</p>` : ""}
             
-            <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+            <p style="color: ${BRAND_COLORS.mutedText}; font-size: 16px; line-height: 1.6;">
               Te avisaremos cuando tu pedido salga en ruta. 🚚
             </p>
             
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${trackingUrl}" style="background-color: #f97316; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+              <a href="${trackingUrl}" style="background-color: ${BRAND_COLORS.kusiOrange}; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
                 Seguir mi pedido
               </a>
             </div>
             
-            <p style="color: #9ca3af; font-size: 14px; text-align: center;">
-              ¿Tienes dudas? Escríbenos por WhatsApp al +51 997 227 638
-            </p>
-            
-            <div style="border-top: 1px solid #e5e7eb; margin-top: 30px; padding-top: 20px; text-align: center;">
-              <p style="color: #9ca3af; font-size: 12px;">
-                © 2024 Kusi Pet - Lima, Perú
-              </p>
-            </div>
+            ${footerHtml}
           </div>
         `,
       };
@@ -75,18 +99,16 @@ const getStatusEmailContent = (
         subject: "🚚 ¡Tu pedido Kusi Pet va en camino!",
         html: `
           <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #f97316; margin: 0;">🐾 Kusi Pet</h1>
-            </div>
+            ${headerHtml}
             
-            <h2 style="color: #1f2937;">¡${name}, tu pedido va en camino! 🚚</h2>
+            <h2 style="color: ${BRAND_COLORS.darkText};">¡${name}, tu pedido va en camino! 🚚</h2>
             
-            <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+            <p style="color: ${BRAND_COLORS.mutedText}; font-size: 16px; line-height: 1.6;">
               Tu pedido Kusi Pet ya salió de nuestro almacén y va directo hacia ti.
             </p>
             
             ${deliveryWindow ? `
-            <div style="background-color: #fef3c7; border-radius: 8px; padding: 16px; margin: 20px 0;">
+            <div style="background-color: #fef3c7; border-left: 4px solid ${BRAND_COLORS.kusiOrange}; border-radius: 8px; padding: 16px; margin: 20px 0;">
               <p style="color: #92400e; font-size: 16px; margin: 0;">
                 <strong>⏰ Estimamos la entrega hoy entre:</strong><br/>
                 ${deliveryWindow}
@@ -94,25 +116,17 @@ const getStatusEmailContent = (
             </div>
             ` : ""}
             
-            <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+            <p style="color: ${BRAND_COLORS.mutedText}; font-size: 16px; line-height: 1.6;">
               Si tienes dudas sobre tu entrega, no dudes en contactarnos.
             </p>
             
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${trackingUrl}" style="background-color: #f97316; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+              <a href="${trackingUrl}" style="background-color: ${BRAND_COLORS.kusiOrange}; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
                 Ver estado de mi pedido
               </a>
             </div>
             
-            <p style="color: #9ca3af; font-size: 14px; text-align: center;">
-              ¿Tienes dudas? Escríbenos por WhatsApp al +51 997 227 638
-            </p>
-            
-            <div style="border-top: 1px solid #e5e7eb; margin-top: 30px; padding-top: 20px; text-align: center;">
-              <p style="color: #9ca3af; font-size: 12px;">
-                © 2024 Kusi Pet - Lima, Perú
-              </p>
-            </div>
+            ${footerHtml}
           </div>
         `,
       };
@@ -122,23 +136,21 @@ const getStatusEmailContent = (
         subject: "✅ ¡Tu pedido Kusi Pet fue entregado!",
         html: `
           <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #f97316; margin: 0;">🐾 Kusi Pet</h1>
-            </div>
+            ${headerHtml}
             
-            <h2 style="color: #1f2937;">¡Gracias por confiar en Kusi Pet, ${name}! 🎉</h2>
+            <h2 style="color: ${BRAND_COLORS.darkText};">¡Gracias por confiar en Kusi Pet, ${name}! 🎉</h2>
             
-            <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+            <p style="color: ${BRAND_COLORS.mutedText}; font-size: 16px; line-height: 1.6;">
               Tu pedido fue entregado exitosamente. Esperamos que tu mascota disfrute mucho de sus productos.
             </p>
             
-            <div style="background-color: #d1fae5; border-radius: 8px; padding: 16px; margin: 20px 0; text-align: center;">
+            <div style="background-color: #d1fae5; border-left: 4px solid ${BRAND_COLORS.heartGreen}; border-radius: 8px; padding: 16px; margin: 20px 0; text-align: center;">
               <p style="color: #065f46; font-size: 18px; margin: 0;">
                 ✅ <strong>Pedido entregado</strong>
               </p>
             </div>
             
-            <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+            <p style="color: ${BRAND_COLORS.mutedText}; font-size: 16px; line-height: 1.6;">
               <strong>¿Cómo te fue?</strong> Tu opinión nos ayuda a seguir mejorando. Cuéntanos tu experiencia respondiendo a este correo o por WhatsApp.
             </p>
             
@@ -148,12 +160,12 @@ const getStatusEmailContent = (
               </a>
             </div>
             
-            <p style="color: #9ca3af; font-size: 14px; text-align: center;">
+            <p style="color: ${BRAND_COLORS.lightText}; font-size: 14px; text-align: center;">
               ¡Gracias por ser parte de la familia Kusi Pet! 🐶🐱
             </p>
             
             <div style="border-top: 1px solid #e5e7eb; margin-top: 30px; padding-top: 20px; text-align: center;">
-              <p style="color: #9ca3af; font-size: 12px;">
+              <p style="color: ${BRAND_COLORS.lightText}; font-size: 12px;">
                 © 2024 Kusi Pet - Lima, Perú
               </p>
             </div>

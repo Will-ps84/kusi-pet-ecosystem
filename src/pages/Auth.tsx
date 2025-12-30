@@ -4,9 +4,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PawPrint, Mail, Lock, User, Phone, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, Phone, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { Logo } from '@/components/Logo';
 
 const loginSchema = z.object({
   email: z.string().email('Ingresa un correo válido'),
@@ -140,14 +141,7 @@ export default function Auth() {
         <div className="w-full max-w-md">
           {/* Logo */}
           <div className="mb-8 text-center">
-            <Link to="/" className="inline-flex items-center gap-2">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-hero shadow-glow">
-                <PawPrint className="h-7 w-7 text-primary-foreground" />
-              </div>
-              <span className="text-2xl font-bold">
-                Kusi <span className="text-primary">Pet</span>
-              </span>
-            </Link>
+            <Logo size="lg" linkTo="/" />
           </div>
 
           {/* Card */}
