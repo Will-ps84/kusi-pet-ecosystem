@@ -5,10 +5,9 @@ import logoImage from '@/assets/kusi-pet-logo.png';
 interface LogoProps {
   showSlogan?: boolean;
   sloganPosition?: 'bottom' | 'side';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   linkTo?: string | null;
   className?: string;
-  variant?: 'full' | 'compact'; // full = logo con texto, compact = solo isotipo
 }
 
 export function Logo({
@@ -17,23 +16,23 @@ export function Logo({
   size = 'md',
   linkTo = '/',
   className,
-  variant = 'full',
 }: LogoProps) {
   const sizeConfig = {
     sm: {
-      logoHeight: 'h-8',
-      text: 'text-xl',
+      logoHeight: 'h-10',
       slogan: 'text-xs',
     },
     md: {
-      logoHeight: 'h-10',
-      text: 'text-2xl',
+      logoHeight: 'h-12',
       slogan: 'text-sm',
     },
     lg: {
-      logoHeight: 'h-14',
-      text: 'text-3xl',
+      logoHeight: 'h-16',
       slogan: 'text-base',
+    },
+    xl: {
+      logoHeight: 'h-20',
+      slogan: 'text-lg',
     },
   };
 
