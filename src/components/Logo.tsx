@@ -19,15 +19,15 @@ export function Logo({
 }: LogoProps) {
   const sizeConfig = {
     sm: {
-      logoHeight: "hh-68",
+      logoHeight: "h-9",
       slogan: "text-xs",
     },
     md: {
-      logoHeight: "h-8",
+      logoHeight: "h-12",
       slogan: "text-sm",
     },
     lg: {
-      logoHeight: "h-10",
+      logoHeight: "h-16",
       slogan: "text-base",
     },
     xl: {
