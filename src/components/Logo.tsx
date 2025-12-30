@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import { PawPrint } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import logoImage from '@/assets/kusi-pet-logo.png';
 
 interface LogoProps {
   showSlogan?: boolean;
@@ -8,6 +8,7 @@ interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
   linkTo?: string | null;
   className?: string;
+  variant?: 'full' | 'compact'; // full = logo con texto, compact = solo isotipo
 }
 
 export function Logo({
@@ -16,24 +17,22 @@ export function Logo({
   size = 'md',
   linkTo = '/',
   className,
+  variant = 'full',
 }: LogoProps) {
   const sizeConfig = {
     sm: {
-      icon: 'h-8 w-8',
-      iconInner: 'h-4 w-4',
+      logoHeight: 'h-8',
       text: 'text-xl',
       slogan: 'text-xs',
     },
     md: {
-      icon: 'h-10 w-10',
-      iconInner: 'h-6 w-6',
-      text: 'text-3xl',
+      logoHeight: 'h-10',
+      text: 'text-2xl',
       slogan: 'text-sm',
     },
     lg: {
-      icon: 'h-14 w-14',
-      iconInner: 'h-8 w-8',
-      text: 'text-4xl',
+      logoHeight: 'h-14',
+      text: 'text-3xl',
       slogan: 'text-base',
     },
   };
@@ -48,18 +47,12 @@ export function Logo({
         className
       )}
     >
-      <div className="flex items-center gap-2">
-        <div
-          className={cn(
-            'flex items-center justify-center bg-gradient-hero shadow-glow rounded-3xl',
-            config.icon
-          )}
-        >
-          <PawPrint className={cn('text-primary-foreground', config.iconInner)} />
-        </div>
-        <span className={cn('font-bold text-foreground', config.text)}>
-          Kusi <span className="text-primary">Pet</span>
-        </span>
+      <div className="flex items-center">
+        <img 
+          src={logoImage} 
+          alt="Kusi Pet - El ecosistema inteligente para el bienestar total de tu mascota" 
+          className={cn(config.logoHeight, 'w-auto object-contain')}
+        />
       </div>
       {showSlogan && (
         <p
