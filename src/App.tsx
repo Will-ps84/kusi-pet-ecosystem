@@ -21,6 +21,9 @@ import Admin from "./pages/Admin";
 import Comunidad from "./pages/Comunidad";
 import ComunidadDetail from "./pages/ComunidadDetail";
 import Tracking from "./pages/Tracking";
+import Terminos from "./pages/Terminos";
+import Privacidad from "./pages/Privacidad";
+import Contacto from "./pages/Contacto";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +52,9 @@ const App = () => (
               <Route path="/comunidad" element={<Comunidad />} />
               <Route path="/comunidad/:id" element={<ComunidadDetail />} />
               <Route path="/tracking/:token" element={<Tracking />} />
+              <Route path="/terminos" element={<Terminos />} />
+              <Route path="/privacidad" element={<Privacidad />} />
+              <Route path="/contacto" element={<Contacto />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
