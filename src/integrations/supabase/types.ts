@@ -556,6 +556,17 @@ export type Database = {
         Args: { p_product_id: string; p_quantity: number }
         Returns: Json
       }
+      get_order_by_tracking_token: {
+        Args: { p_tracking_token: string }
+        Returns: {
+          created_at: string
+          delivery_address: string
+          delivery_window: string
+          district: string
+          id: string
+          status: Database["public"]["Enums"]["order_status"]
+        }[]
+      }
       get_public_vendors: {
         Args: never
         Returns: {

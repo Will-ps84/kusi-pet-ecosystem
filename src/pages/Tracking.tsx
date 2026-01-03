@@ -44,23 +44,23 @@ export default function Tracking() {
     setError(null);
 
     try {
+      // Use the secure RPC function that only returns limited fields
       const { data, error: fetchError } = await supabase
-        .from('orders')
-        .select('id, status, district, delivery_address, delivery_window, created_at')
-        .eq('tracking_token', trackingToken)
-        .single();
+        .rpc('get_order_by_tracking_token', { p_tracking_token: trackingToken });
 
       if (fetchError) {
-        if (fetchError.code === 'PGRST116') {
-          setError('not_found');
-        } else {
-          console.error('Error fetching order:', fetchError);
-          setError('error');
-        }
+        console.error('Error fetching order:', fetchError);
+        setError('error');
         return;
       }
 
-      setOrder(data);
+      // RPC returns an array, get first result
+      if (!data || data.length === 0) {
+        setError('not_found');
+        return;
+      }
+
+      setOrder(data[0]);
     } catch (err) {
       console.error('Error:', err);
       setError('error');
