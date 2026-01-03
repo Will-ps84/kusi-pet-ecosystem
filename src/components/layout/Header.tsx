@@ -55,13 +55,21 @@ export function Header() {
   // Combine all nav links for display
   const navLinks = [...publicNavLinks, ...userNavLinks, ...adminNavLinks];
 
+  /**
+   * Header Component - Kusi Pet
+   * 
+   * Cambios de alineación (Enero 2025):
+   * - Container usa flex items-center para alinear logo y navegación verticalmente
+   * - Logo y nav están al mismo nivel vertical gracias a items-center
+   * - Height fijo de h-16 (64px) para consistencia
+   */
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container h-16 items-center justify-between flex flex-row">
-        {/* Logo */}
+      <div className="container flex h-16 items-center justify-between">
+        {/* Logo - alineado verticalmente con items-center del contenedor padre */}
         <Logo size="md" />
 
-        {/* Desktop Navigation */}
+        {/* Desktop Navigation - items-center para alinear con el logo */}
         <nav className="hidden items-center gap-6 md:flex">
           {navLinks.map(link => (
             <Link 
